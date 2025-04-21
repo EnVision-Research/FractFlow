@@ -18,23 +18,22 @@ class ConfigManager:
     allowing configuration to be set from various sources.
     """
     
-    _instance = None
-    
-    def __new__(cls):
-        """Implement singleton pattern."""
-        if cls._instance is None:
-            cls._instance = super(ConfigManager, cls).__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
-    
-    def __init__(self):
-        """Initialize the config manager if not already initialized."""
-        if getattr(self, '_initialized', False):
-            return
-            
+    def __init__(self, initial_config: Optional[Dict[str, Any]] = None):
+        """
+        Initialize the config manager with optional initial configuration.
+        
+        Args:
+            initial_config: Optional initial configuration to use
+        """
         # Initialize with default configuration
         self._config = self._get_default_config()
-        self._initialized = True
+        
+        # Apply initial config if provided
+        if initial_config:
+            self.set_config(initial_config)
+            
+        # Load environment variables after initial config
+        self._load_from_env()
     
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default configuration values."""
@@ -49,18 +48,21 @@ class ConfigManager:
                 'api_key': None,
                 'base_url': 'https://api.deepseek.com',
                 'model': 'deepseek-chat',
-                'tool_calling_model': 'deepseek-chat',
             },
             'qwen': {
                 'api_key': None,
                 'base_url': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
                 'model': 'qwen-plus',
-                'tool_calling_model': 'qwen-plus',
             },
             'agent': {
                 'max_iterations': 10,
                 'custom_system_prompt': '',      # Field for customizable part of system prompt
                 'provider': 'deepseek',          # Default provider is deepseek
+            },
+            'tool_calling': {
+                'max_retries': 5,                # Maximum number of retries for tool calls
+                'base_url': 'https://api.deepseek.com',
+                'model': 'deepseek-chat',
             }
         }
     
@@ -74,12 +76,26 @@ class ConfigManager:
         # Return a deep copy to prevent external modification of the internal state
         return copy.deepcopy(self._config)
     
+    def create_copy(self) -> 'ConfigManager':
+        """
+        Create a new ConfigManager instance with the same configuration.
+        
+        Returns:
+            A new ConfigManager instance with a copy of the current configuration
+        """
+        new_config = ConfigManager()
+        new_config.set_config(self.get_config())
+        return new_config
+    
     def set_config(self, config: Dict[str, Any]) -> None:
         """
         Set multiple configuration values at once.
         
         Args:
             config: Configuration dictionary to set
+            
+        Raises:
+            KeyError: If any key does not exist in the default configuration structure
         """
         # Process each section in the config
         for section, values in config.items():
@@ -90,9 +106,10 @@ class ConfigManager:
             elif values is not None:  # Handle direct values like 'provider'
                 self.set(section, values)
     
-    def load_from_env(self, env_vars: Optional[Dict[str, str]] = None) -> None:
+    def _load_from_env(self, env_vars: Optional[Dict[str, str]] = None) -> None:
         """
-        Load configuration from environment variables.
+        Load API keys from environment variables. Other configuration values 
+        will use defaults from _get_default_config.
         
         Args:
             env_vars: Optional dictionary of environment variables.
@@ -101,35 +118,11 @@ class ConfigManager:
         # Use provided env_vars or os.environ
         env = env_vars or os.environ
         
-        # OpenAI Provider settings
+        # Only load API keys from environment variables
         self.set('openai.api_key', env.get('COMPLETION_API_KEY'))
-        self.set('openai.base_url', env.get('COMPLETION_BASE_URL'))
-        self.set('openai.model', env.get('COMPLETION_MODEL_NAME', self.get('openai.model')))
-        self.set('openai.tool_calling_model', env.get('TOOL_CALLING_MODEL', self.get('openai.tool_calling_model')))
-        
-        # DeepSeek Provider settings
         self.set('deepseek.api_key', env.get('DEEPSEEK_API_KEY'))
-        self.set('deepseek.base_url', env.get('DEEPSEEK_BASE_URL', self.get('deepseek.base_url')))
-        self.set('deepseek.model', env.get('DEEPSEEK_MODEL_NAME', self.get('deepseek.model')))
-        self.set('deepseek.tool_calling_model', env.get('DEEPSEEK_TOOL_CALLING_MODEL', self.get('deepseek.tool_calling_model')))
-        
-        # QWEN Provider settings
         self.set('qwen.api_key', env.get('QWEN_API_KEY'))
-        self.set('qwen.base_url', env.get('QWEN_BASE_URL', self.get('qwen.base_url')))
-        self.set('qwen.model', env.get('QWEN_MODEL_NAME', self.get('qwen.model')))
-        self.set('qwen.tool_calling_model', env.get('QWEN_TOOL_CALLING_MODEL', self.get('qwen.tool_calling_model')))
         
-        # Agent settings
-        max_iterations = env.get('MAX_ITERATIONS')
-        if max_iterations is not None:
-            try:
-                self.set('agent.max_iterations', int(max_iterations))
-            except ValueError:
-                pass  # Use default if conversion fails
-                
-        # Support both new and old environment variable for custom prompt (for transition period)
-        self.set('agent.custom_system_prompt', env.get('CUSTOM_SYSTEM_PROMPT', env.get('CUSTOM_PROMPT', env.get('DEFAULT_SYSTEM_PROMPT', self.get('agent.custom_system_prompt')))))
-        self.set('agent.provider', env.get('AI_PROVIDER', self.get('agent.provider')))
     
     def get(self, key: str, default: Any = None) -> Any:
         """
@@ -160,12 +153,26 @@ class ConfigManager:
         Args:
             key: Dot-separated path to the configuration value (e.g. 'openai.api_key')
             value: The value to set
+            
+        Raises:
+            KeyError: If the key does not exist in the default configuration structure
         """
         # Skip None values to prevent overriding defaults
         if value is None:
             return
             
+        # Check if the key exists in the default configuration
+        default_config = self._get_default_config()
         parts = key.split('.')
+        check_config = default_config
+        
+        for part in parts:
+            if isinstance(check_config, dict) and part in check_config:
+                check_config = check_config[part]
+            else:
+                raise KeyError(f"Config key '{key}' does not exist in the default configuration structure")
+        
+        # If we got here, the key exists in the default config, so we can set it
         config = self._config
         
         for i, part in enumerate(parts[:-1]):

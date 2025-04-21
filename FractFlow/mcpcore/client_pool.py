@@ -65,7 +65,7 @@ class MCPClientPool:
             for tool in response.tools:
                 self.tool_to_client[tool.name] = client_name
                 
-            logger.debug(f"Added client '{client_name}' with {len(response.tools)} tools")
+            logger.info(f"Added client '{client_name}' with {len(response.tools)} tools")
             
         except Exception as e:
             logger.error(f"Error adding client '{client_name}': {e}")
@@ -106,7 +106,7 @@ class MCPClientPool:
         """
         try:
             await self.exit_stack.aclose()
-            logger.debug("All MCP clients cleaned up")
+            logger.info("All MCP clients cleaned up")
         except Exception as e:
             logger.error(f"Error during cleanup: {e}")
             raise

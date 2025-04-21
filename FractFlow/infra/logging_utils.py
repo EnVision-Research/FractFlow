@@ -84,13 +84,14 @@ class ColorFormatter(logging.Formatter):
 DEFAULT_FORMAT = '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
 DEFAULT_DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-def setup_logging(level: int = logging.INFO, use_colors: bool = True):
+def setup_logging(level: int = logging.INFO, use_colors: bool = True, namespace_levels: Optional[Dict[str, int]] = None):
     """
     Configure logging with standard formatting.
     
     Args:
-        level: The logging level to use
+        level: The logging level to use for root logger
         use_colors: Whether to enable colored output
+        namespace_levels: Dictionary mapping logger namespaces to their log levels
     """
     # 创建根日志记录器
     root_logger = logging.getLogger()
@@ -102,7 +103,8 @@ def setup_logging(level: int = logging.INFO, use_colors: bool = True):
     
     # 创建控制台处理器
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(level)
+    # 让处理器使用根logger的级别
+    console_handler.setLevel(logging.DEBUG)  # 设置为DEBUG以允许所有级别通过
     
     # 使用带颜色的格式化器 
     if use_colors and sys.stdout.isatty():
@@ -118,6 +120,20 @@ def setup_logging(level: int = logging.INFO, use_colors: bool = True):
     
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
+    
+    # 设置特定命名空间的日志级别
+    if namespace_levels:
+        for namespace, namespace_level in namespace_levels.items():
+            # 获取指定命名空间的日志器并设置级别
+            ns_logger = logging.getLogger(namespace)
+            ns_logger.setLevel(namespace_level)
+            # 确保propagate设置为True
+            ns_logger.propagate = True
+            
+                
+    # Output current log levels for debugging
+    print(f"Root logger level: {logging.getLevelName(root_logger.level)}")
+    print(f"Console handler level: {logging.getLevelName(console_handler.level)}")
 
 def get_logger(name: Optional[str] = None):
     """
@@ -173,9 +189,6 @@ class LoggerWrapper:
                 # Still maintain simplified representation of list items
                 return f"[{len(value)} items]"
             return str(value)
-        # No longer truncate long strings
-        # elif isinstance(value, str) and len(value) > 100:
-        #     return f"{value[:100]}..."
         return str(value)
     
     def _get_level_color(self, level_name: str) -> str:
@@ -187,9 +200,9 @@ class LoggerWrapper:
     def info(self, message: str, data: Optional[Dict[str, Any]] = None):
         """Log an info message with optional structured data."""
         if data:
-            self.logger.debug(f"{message} {self._format_data(data)}")
+            self.logger.info(f"{message} {self._format_data(data)}")
         else:
-            self.logger.debug(message)
+            self.logger.info(message)
     
     def debug(self, message: str, data: Optional[Dict[str, Any]] = None):
         """Log a debug message with optional structured data."""
@@ -235,9 +248,9 @@ class LoggerWrapper:
             # Highlight data portion
             formatted_data = " ".join(f"{COLORS['BOLD']}{COLORS['CYAN']}{k.upper()}{COLORS['RESET']}={COLORS['WHITE']}{self._format_value(v)}{COLORS['RESET']}" 
                                     for k, v in data.items()) if self.use_colors else self._format_data(data)
-            self.logger.debug(f"{highlighted_msg} {formatted_data}")
+            self.logger.info(f"{highlighted_msg} {formatted_data}")
         else:
-            self.logger.debug(highlighted_msg)
+            self.logger.info(highlighted_msg)
             
     def result(self, message: str, data: Optional[Dict[str, Any]] = None):
         """

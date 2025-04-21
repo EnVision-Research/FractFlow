@@ -18,19 +18,21 @@ async def main():
     # Create and configure agent
     agent = Agent()
     config = agent.get_config()
-    config['agent']['provider'] = 'qwen'
+    config['agent']['provider'] = 'deepseek'
     config['agent']['custom_system_prompt'] = '你是一个有用的助手，在回复用户时请尽可能提供详细信息。请在思考过程中展示你的推理过程。'
     config['deepseek']['api_key'] = os.getenv('DEEPSEEK_API_KEY')
     config['deepseek']['model'] = 'deepseek-chat'
     config['qwen']['api_key'] = os.getenv('QWEN_API_KEY')
     config['qwen']['base_url'] = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
-    config['agent']['max_iterations'] = 100
+    config['qwen']['model'] = 'Qwen2-7B-Instruct'
+    config['agent']['max_iterations'] = 10
     
     # Set configuration
     agent.set_config(config)
     
     # Add tools
-    agent.add_tool("./tools/forecast.py")
+    agent.add_tool("./tools/ComfyUITool.py")
+    agent.add_tool("./tools/VisualQestionAnswer.py")
     
     try:
         # Create UI

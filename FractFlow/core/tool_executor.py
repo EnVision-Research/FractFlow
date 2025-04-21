@@ -14,6 +14,7 @@ Handles the execution of tools based on model requests.
 
 import logging
 from typing import Dict, Any, Optional
+from ..infra.config import ConfigManager
 from ..infra.error_handling import ToolExecutionError, handle_error
 
 logger = logging.getLogger(__name__)
@@ -26,9 +27,14 @@ class ToolExecutor:
     handling errors and formatting results.
     """
     
-    def __init__(self):
-        """Initialize the tool executor."""
-        pass
+    def __init__(self, config: Optional[ConfigManager] = None):
+        """
+        Initialize the tool executor.
+        
+        Args:
+            config: Configuration manager instance to use
+        """
+        self.config = config or ConfigManager()
         
     async def execute_tool(self, tool_name: str, arguments: Dict[str, Any]) -> str:
         """

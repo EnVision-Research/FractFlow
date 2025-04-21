@@ -23,9 +23,27 @@ sys.path.insert(0, project_root)
 # 导入FractFlow Agent类，用于调用其他Agent
 from FractFlow.agent import Agent
 
+from FractFlow.infra.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 # Initialize FastMCP server
 mcp = FastMCP("Code Generator")
+
+@mcp.resource("code_gen_coordinator://{name}/path")
+def get_code_path(name: str) -> str:
+    """
+    Get the path where generated code should be saved.
+    
+    Args:
+        name: Name of the code being generated
+        
+    Returns:
+        Path where the generated code should be saved
+    """
+    # Create path in tools directory relative to project root
+    code_path = os.path.join(project_root, "tools", f"{name}")
+    return code_path
 
 
 @mcp.tool()
@@ -34,10 +52,10 @@ async def code_gen_coordinator(user_input: str) -> str:
     Given a request about coding, coordinate multipole LLM to generate the code.
 
     Args:
-        user_input: Natural language description of the desired tool
+        user_input: Natural language description of the desired code
         
     Returns:
-        A message describing the generated tool, with file path
+        A message describing the generated code, with file path
     """
     # Load environment variables
     load_dotenv()
@@ -46,7 +64,6 @@ async def code_gen_coordinator(user_input: str) -> str:
     agent = Agent('coordinator_agent')
     config = agent.get_config()
     config['agent']['provider'] = 'deepseek'
-    config['deepseek']['api_key'] = os.getenv('DEEPSEEK_API_KEY')
     config['deepseek']['model'] = 'deepseek-chat'
     config['agent']['max_iterations'] = 10 
     config['agent']['custom_system_prompt'] = """

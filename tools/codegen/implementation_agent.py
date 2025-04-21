@@ -41,12 +41,11 @@ async def implementation_agent(tool_description: str) -> Dict[str, Any]:
     
     # 创建Agent实例
     agent = Agent('implementation_agent')
-    config = agent.get_config()
-    config['agent']['provider'] = os.getenv('LLM_PROVIDER', 'deepseek')
-    config['deepseek']['api_key'] = os.getenv('DEEPSEEK_API_KEY')
-    config['agent']['model'] = 'deepseek-chat'
-    agent.set_config(config)
     
+    config = agent.get_config()
+    config['agent']['provider'] = 'deepseek'
+    config['deepseek']['model'] = 'deepseek-chat'
+    agent.set_config(config)
     # 添加tools.py基础工具
     tools_path = os.path.join(current_dir, "tools.py")
     agent.add_tool(tools_path)

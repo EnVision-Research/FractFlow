@@ -22,7 +22,6 @@ from ..infra.error_handling import AgentError, handle_error
 from ..infra.logging_utils import get_logger
 
 logger = get_logger(__name__)
-config = ConfigManager()
 
 class QueryProcessor:
     """
@@ -32,17 +31,19 @@ class QueryProcessor:
     implementing the core loop.
     """
     
-    def __init__(self, orchestrator: Orchestrator, tool_executor: ToolExecutor):
+    def __init__(self, orchestrator: Orchestrator, tool_executor: ToolExecutor, config: Optional[ConfigManager] = None):
         """
         Initialize the query processor.
         
         Args:
             orchestrator: The orchestrator that manages components
             tool_executor: The tool executor that handles tool execution
+            config: Configuration manager instance to use
         """
         self.orchestrator = orchestrator
         self.tool_executor = tool_executor
-        self.max_iterations = config.get('agent.max_iterations', 10)
+        self.config = config or ConfigManager()
+        self.max_iterations = self.config.get('agent.max_iterations', 10)
     
     async def process_query(self, user_query: str) -> str:
         """
@@ -81,8 +82,7 @@ class QueryProcessor:
                 # Log reasoning content (if exists)
                 reasoning_content = message.get("reasoning_content")
                 if reasoning_content:
-                    truncated_reasoning = str(reasoning_content)[:500] + ("..." if len(str(reasoning_content)) > 500 else "")
-                    logger.debug("Reasoning content", {"reasoning": truncated_reasoning})
+                    logger.debug("Reasoning content", {"reasoning": reasoning_content})
                 
                 # If there are no tool calls, return final answer
                 if not tool_calls:
@@ -128,9 +128,8 @@ class QueryProcessor:
                         # Call the tool
                         try:
                             result = await self.tool_executor.execute_tool(tool_name, function_args)
-                            # Add truncated tool execution result log
-                            truncated_result = str(result)[:200] + ("..." if len(str(result)) > 200 else "")
-                            logger.debug("Tool execution result", {"tool": tool_name, "result": truncated_result})
+                            # Add tool execution result log
+                            logger.debug("Tool execution result", {"tool": tool_name, "result": result})
                             # Add result to conversation history
                             model.add_tool_result(tool_name, result, tool_call_id)
                                 

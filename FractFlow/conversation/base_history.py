@@ -270,8 +270,8 @@ class ConversationHistory(BaseConversationHistory):
                     tool_calls = f" [TOOLS: {', '.join(tool_names)}]"
                 output.append(f"[{i}] ASSISTANT{tool_calls}: {content_preview}")
             elif role == "tool":
-                tool_call_id = message.get("tool_call_id", "unknown")
-                output.append(f"[{i}] TOOL [{tool_call_id}]: {content_preview}")
+                tool_name = message.get("tool_name", "unknown")
+                output.append(f"[{i}] TOOL [{tool_name}]: {content_preview}")
             else:
                 output.append(f"[{i}] UNKNOWN: {content_preview}")
                 

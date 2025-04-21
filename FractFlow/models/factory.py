@@ -8,14 +8,13 @@ from typing import Optional
 from .base_model import BaseModel
 from ..infra.config import ConfigManager
 
-config = ConfigManager()
-
-def create_model(provider: Optional[str] = None) -> BaseModel:
+def create_model(provider: Optional[str] = None, config: Optional[ConfigManager] = None) -> BaseModel:
     """
     Factory function to create an appropriate model based on the provider.
     
     Args:
         provider: The AI provider to use (e.g., 'openai', 'deepseek', 'qwen')
+        config: Configuration manager instance to use
         
     Returns:
         An instance of BaseModel
@@ -24,18 +23,19 @@ def create_model(provider: Optional[str] = None) -> BaseModel:
         ImportError: If the specified provider module cannot be loaded
         ValueError: If the specified provider is not supported
     """
+    # 如果没有提供config，创建默认config
+    if config is None:
+        config = ConfigManager()
+        
     # Use provider from args, or from config, or default to openai
     provider = provider or config.get('agent.provider', 'deepseek')
     
     if provider == 'deepseek':
-        if config.get('deepseek.model') == 'deepseek-reasoner':
-            from .deepseek_model_reasoner import DeepSeekModel
-        else:
-            from .deepseek_model import DeepSeekModel
-        return DeepSeekModel()
+        from .deepseek_model import DeepSeekModel
+        return DeepSeekModel(config=config)
     elif provider == 'qwen':
         from .qwen_model import QwenModel
-        return QwenModel()
+        return QwenModel(config=config)
     elif provider == 'openai':
         # Note: This part would be properly implemented when OpenAIModel is created
         # For now, raising an error to indicate it's not implemented yet

@@ -21,12 +21,6 @@ from .core.query_processor import QueryProcessor
 from .core.tool_executor import ToolExecutor
 from .infra.config import ConfigManager
 
-import logging
-from FractFlow.infra.logging_utils import setup_logging
-
-# Set up colored logs
-setup_logging(level=logging.INFO, use_colors=True)
-
 class Agent:
     """
     Main interface for using the FractalFlow agent.
@@ -35,12 +29,16 @@ class Agent:
     the FractalFlow agent system.
     """
     
-    def __init__(self, name: str = 'agent'):
+    def __init__(self, name: str = 'agent', config: Optional[Dict[str, Any]] = None):
         """
         Initialize the FractalFlow agent.
+        
+        Args:
+            name: Name for the agent
+            config: Optional initial configuration dictionary
         """
         # Initialize configuration with defaults only
-        self.config_manager = ConfigManager()
+        self.config_manager = ConfigManager(config)
         self.name = name
         # Initialize tool configs
         self.tool_configs = {}
@@ -50,7 +48,7 @@ class Agent:
         self._query_processor = None
         self._tool_executor = None
         self._is_initialized = False
-        self.logger = logging.getLogger(name)
+        
     def get_config(self) -> Dict[str, Any]:
         """
         Get the current configuration.
@@ -83,7 +81,7 @@ class Agent:
             raise ValueError(f"Tool script not found: {tool_path}")
         
         if tool_name is None:
-            tool_name = os.path.basename(os.path.dirname(tool_path))
+            tool_name = os.path.basename(tool_path)
         
         self.tool_configs[tool_name] = tool_path
     
@@ -93,12 +91,18 @@ class Agent:
             # Get provider from config
             provider = self.config_manager.get('agent.provider')
             
+            # Create components with the config_manager
             self._orchestrator = Orchestrator(
                 tool_configs=self.tool_configs,
-                provider=provider
+                provider=provider,
+                config=self.config_manager
             )
-            self._tool_executor = ToolExecutor()
-            self._query_processor = QueryProcessor(self._orchestrator, self._tool_executor)
+            self._tool_executor = ToolExecutor(config=self.config_manager)
+            self._query_processor = QueryProcessor(
+                self._orchestrator, 
+                self._tool_executor,
+                config=self.config_manager
+            )
             self._is_initialized = True
     
     async def initialize(self) -> None:
@@ -131,7 +135,6 @@ class Agent:
         
         # Process the query
         result = await self._query_processor.process_query(query)
-        self.logger.info(self.get_history())
         return result 
         
     def get_history(self) -> List[Dict[str, Any]]:

@@ -25,7 +25,6 @@ from FractFlow.infra.config import ConfigManager
 from FractFlow.infra.error_handling import AgentError, handle_error, ConfigurationError
 
 logger = logging.getLogger(__name__)
-config = ConfigManager()
 
 class Orchestrator:
     """
@@ -37,7 +36,8 @@ class Orchestrator:
     
     def __init__(self,
                  tool_configs: Optional[Dict[str, str]] = None,
-                 provider: Optional[str] = None):
+                 provider: Optional[str] = None,
+                 config: Optional[ConfigManager] = None):
         """
         Initialize the orchestrator.
         
@@ -46,12 +46,16 @@ class Orchestrator:
                           Example: {'weather': '/path/to/weather_tool.py',
                                    'search': '/path/to/search_tool.py'}
             provider: The AI provider to use (e.g., 'openai', 'deepseek')
+            config: Configuration manager instance to use
         """
+        # Create or use the provided config
+        self.config = config or ConfigManager()
+        
         # Get provider from config or use provided override
-        self.provider = provider or config.get('agent.provider', 'openai')
+        self.provider = provider or self.config.get('agent.provider', 'openai')
         
         # Create the model directly using factory with provider only
-        self.model = create_model(provider=self.provider)
+        self.model = create_model(provider=self.provider, config=self.config)
         
         # Tool launcher will be initialized in self.start()
         self.launcher = None

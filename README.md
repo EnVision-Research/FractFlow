@@ -32,6 +32,28 @@ Then you will get a dist folder, which can be installed with the following comma
 uv pip install dist/FractFlow-0.1.0-py3-none-any.whl
 ```
 
+### Method 3: Development Mode Installation
+
+For development purposes, you can install the package in development mode. This allows you to modify the code without reinstalling the package:
+
+```bash
+uv venv
+source .venv/bin/activate
+uv pip install -r requirements.txt
+pip install -e .
+```
+
+After installation, you can run the example scripts from the `scripts` directory:
+
+```bash
+python scripts/run_simple_example.py
+python scripts/run_code_gen.py
+python scripts/run_fractal_example.py
+python scripts/run_simple_example_ui.py
+```
+
+Note: Make sure you are in the project root directory when running these commands.
+
 ## Quick Start
 
 First, you need to obtain API keys for language models. Currently, DeepSeek and Qwen models are supported. DeepSeek models are preferred, as Qwen has not been fully tested yet.
@@ -296,3 +318,16 @@ This approach allows you to create a specialized Agent tool that can be called b
 Supported models:
 - DeepSeek (reasoner and chat)
 - Qwen (qwen2.5-vl-72b-instruct, qwen-plus)
+
+
+----
+Updates
+
+## Version 0.2.0
+- Improved security of configuration system
+- Unified DeepSeek and Qwen model implementations
+- Enhanced tool calling capabilities
+  - Added support for parallel multi-tool execution
+  - Refactored toolCallingHelper as independent module
+  - Improved DeepSeek model reasoner with better tool calling
+- Updated the image_io tool
