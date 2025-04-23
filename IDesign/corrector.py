@@ -7,12 +7,64 @@ from FractFlow.agent import Agent
 import re
 import time
 
-from schemas import layout_corrector_schema
+from schemas import layout_corrector_schema, layout_refiner_schema
 from utils import get_room_priors, extract_list_from_json
 from utils import preprocess_scene_graph, build_graph, remove_unnecessary_edges, handle_under_prepositions, get_conflicts, get_size_conflicts, get_object_from_scene_graph
 from utils import get_object_from_scene_graph, get_rotation, get_cluster_objects, clean_and_extract_edges
 from utils import get_cluster_size
 from utils import get_possible_positions, is_point_bbox, calculate_overlap, get_topological_ordering, place_object, get_depth, get_visualization
+from jsonschema import validate
+
+def json_schema_debugger_corrector(json_data):
+    message = json_data
+
+    preps_layout = ["left-side", "right-side", "in the middle"]
+    preps_objs = ['on', 'left of', 'right of', 'in front', 'behind', 'under', 'above']
+
+    pattern = r'```json\s*([^`]+)\s*```' # Match the json object
+    match = re.search(pattern, message, re.DOTALL)
+    if match:
+        return match.group(1)
+    else:
+        match = message
+    json_obj_new = json.loads(match)
+    is_success  = False
+    try:
+        validate(instance=json_obj_new, schema=layout_corrector_schema)
+        is_success = True
+    except Exception as e:
+        feedback = str(e.message)
+        if e.validator == "enum":
+            if str(preps_objs) in e.message:
+                feedback += f"Change the preposition {e.instance} to something suitable with the intended positioning from the list {preps_objs}"
+            elif str(preps_layout) in e.message:
+                feedback += f"Change the preposition {e.instance} to something suitable with the intended positioning from the list {preps_layout}"
+    if is_success:
+        return "SUCCESS"
+    return feedback
+def json_schema_debugger_refiner(json_data):
+    message = json_data
+
+    preps_layout = ["left-side", "right-side", "in the middle"]
+    preps_objs = ['on', 'left of', 'right of', 'in front', 'behind', 'under', 'above']
+
+    json_obj_new = json.loads(message)
+    if "items" in json_obj_new["children_objects"]:
+        json_obj_new = {"children_objects" : json_obj_new["children_objects"]["items"]}
+    is_success  = False
+    try:
+        validate(instance=json_obj_new, schema=layout_refiner_schema)
+        is_success = True
+    except Exception as e:
+        feedback = str(e.message)
+        if e.validator == "enum":
+            if str(preps_objs) in e.message:
+                feedback += f"Change the preposition {e.instance} to something suitable with the intended positioning from the list {preps_objs}"
+            elif str(preps_layout) in e.message:
+                feedback += f"Change the preposition {e.instance} to something suitable with the intended positioning from the list {preps_layout}"
+    if is_success:
+        return "SUCCESS"
+    return feedback
 
 
 async def main(room_dimensions, user_preference):
@@ -29,10 +81,10 @@ async def main(room_dimensions, user_preference):
     
     # 设置API提供商和模型
     for config in [config_corrector, config_refiner]:
-        config['agent']['provider'] = 'qwen'
-        config['qwen']['model'] = "qwen-max-2025-01-25"
-        config['qwen']['base_url'] = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-        config['qwen']['api_key'] = 'key' #TODO
+        config['agent']['provider'] = 'deepseek' # This is a little bit hack. 
+        config['deepseek']['model'] = 'gpt-4o-2024-08-06' # 'DeepSeek-R1-671B' # "qwen-max-2025-01-25"
+        config['deepseek']['base_url'] = 'https://gpt-api.hkust-gz.edu.cn/v1' # "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        config['deepseek']['api_key'] = 'Bearer 58d0bacc761d4678855f9582819abcc77a4bacaa54984213905d9d546670638a' # 'sk-d770b774f1aa42a2b17fecbd08bd0362'
         config['agent']['max_iterations'] = 10
     
     # 设置各自的系统提示
@@ -122,16 +174,30 @@ async def main(room_dimensions, user_preference):
         for conflict in conflicts:
             print(conflict)
             print("\n\n")
-
+    print(len(conflicts))
+    print("\n")
     while len(conflicts) > 0:
         corrector_input = f"""
             {conflicts[0]}
             """
-        correction = await corrector.process_query(corrector_input)
-        print("Corrector结果：", correction)
-        pattern = r'```json\s*([^`]+)\s*```' # Match the json object
-        match = re.search(pattern, correction, re.DOTALL).group(1)
-        correction_json = json.loads(match)
+        while True:
+            correction = await corrector.process_query(corrector_input)
+            print("Corrector结果: ", correction)
+            pattern = r'```json\s*([^`]+)\s*```' # Match the json object
+            match = re.search(pattern, correction, re.DOTALL)
+            if match:
+                json_content = match.group(1)
+            else:
+                json_content = correction  # 使用原始内容
+
+            check = json_schema_debugger_corrector(json_content)
+            print(check)
+            if check == 'SUCCESS':
+                break
+            else:
+                corrector_input = check
+
+        correction_json = json.loads(json_content)
         corr_obj = get_object_from_scene_graph(correction_json["corrected_object"]["new_object_id"], scene_graph)
         corr_obj["is_on_the_floor"] = correction_json["corrected_object"]["is_on_the_floor"]
         corr_obj["facing"] = correction_json["corrected_object"]["facing"]
@@ -192,9 +258,24 @@ async def main(room_dimensions, user_preference):
 
             The children objects are '{prep}' the parent object
             """
+        while True:
 
-        new_relationships = await refiner.process_query(refiner_input)
-        new_relationships = json.loads(new_relationships)
+            new_relationships = await refiner.process_query(refiner_input)
+            print("refiner结果: ", new_relationships)
+            pattern = r'```json\s*([^`]+)\s*```' # Match the json object
+            match = re.search(pattern, new_relationships, re.DOTALL)
+            if match:
+                json_content = match.group(1)
+            else:
+                json_content = new_relationships  # 使用原始内容
+
+            check = json_schema_debugger_refiner(json_content)
+            print(check)
+            if check == 'SUCCESS':
+                break
+            else:
+                refiner_input = check
+        new_relationships = json.loads(json_content)
         if "items" in new_relationships["children_objects"]:
             new_relationships = {"children_objects" : new_relationships["children_objects"]["items"]}
         # Check whether the relationships are valid
@@ -374,7 +455,7 @@ def backtrack(verbose=False, room_dimensions=[4, 4, 2.5]):
 if __name__ == "__main__":
     # 加载环境变量
     load_dotenv()
-    room_dimensions = [4, 5, 2.8]
+    room_dimensions = [5, 5, 2.8]
     # 运行主函数
     asyncio.run(main(room_dimensions, 'Design me a living room')) 
     create_object_clusters(verbose=True)

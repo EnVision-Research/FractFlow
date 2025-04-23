@@ -6,10 +6,48 @@ import json
 from utils import extract_list_from_json
 import copy
 import time
+from jsonschema import validate
 # Import the FractalFlow Agent
 from FractFlow.agent import Agent
 from FractFlow.infra.config import ConfigManager
-from schemas import interior_designer_schema, interior_architect_schema, engineer_schema
+from schemas import initial_schema, interior_designer_schema, interior_architect_schema, engineer_schema
+
+def json_schema_debugger(json_data):
+    message = json_data
+    preps_layout = ['in front', 'on', 'in the corner', 'in the middle of']
+    preps_objs = ['on', 'left of', 'right of', 'in front', 'behind', 'under', 'above']
+
+    json_obj_new = json.loads(message)
+    try:
+        json_obj_new_ids = [item["new_object_id"] for item in json_obj_new["objects_in_room"]]
+    except:
+        return "Use 'new_object_id' instead of 'object_id' or 'name'!"
+
+    is_success  = False
+    try:
+        validate(instance=json_obj_new, schema=initial_schema)
+        is_success = True
+    except Exception as e:
+        feedback = str(e.message)
+        if e.validator == "enum":
+            if e.instance in json_obj_new_ids:
+                feedback += f" Put the {e.instance} object under 'objects_in_room' instead of 'room_layout_elements' and delete the {e.instance} object under 'room_layout_elements'"
+            elif str(preps_objs) in e.message:
+                feedback += f"Change the preposition {e.instance} to something suitable with the intended positioning from the list {preps_objs}"
+            elif str(preps_objs) in e.message:
+                feedback += f"Change the preposition {e.instance} to something suitable with the intended positioning from the list {preps_layout}"
+
+    if is_success:
+        return "SUCCESS"
+    return feedback
+def clean_json_string(content):
+    # 使用正则表达式匹配JSON内容
+    pattern = r'```(?:json)?\s*(\{[\s\S]*\})\s*```'
+    match = re.search(pattern, content)
+    if match:
+        return match.group(1)
+    # 如果没有markdown标记，直接返回内容
+    return content.strip()
 
 async def main(room_dimensions, user_preference):
     # 创建agents
@@ -25,18 +63,19 @@ async def main(room_dimensions, user_preference):
 
     # 设置API提供商和模型
     for config in [config_designer, config_architect, config_engineer]:
-        config['agent']['provider'] = 'qwen'
-        config['qwen']['model'] = "qwen-max-2025-01-25"
-        config['qwen']['base_url'] = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-        config['qwen']['api_key'] = 'key' #TODO
-        config['agent']['max_iterations'] = 10
+        # config['agent']['provider'] = 'qwen'
+        # config['qwen']['model'] = "qwen-plus-2025-01-25"
+        # config['qwen']['base_url'] = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        # config['qwen']['api_key'] = 'sk-d770b774f1aa42a2b17fecbd08bd0362' #TODO
+        # config['agent']['max_iterations'] = 10
     # for config in [config_designer, config_architect, config_engineer]:
-    #     config['agent']['provider'] = 'deepseek'
-    #     config['deepseek']['model'] = 'DeepSeek-R1-671B ' # "qwen-max-2025-01-25"
-    #     config['deepseek']['base_url'] = 'https://gpt-api.hkust-gz.edu.cn/v1' # "https://dashscope.aliyuncs.com/compatible-mode/v1"
-    #     config['deepseek']['api_key'] = 'cap3d 58d0bacc761d4678855f9582819abcc77a4bacaa54984213905d9d546670638a' # 'sk-d770b774f1aa42a2b17fecbd08bd0362'
-    #     config['agent']['max_iterations'] = 10
-
+        config['agent']['provider'] = 'deepseek'
+        config['deepseek']['model'] = 'gpt-4o-2024-08-06' # 'DeepSeek-R1-671B' # "qwen-max-2025-01-25"
+        config['deepseek']['base_url'] = 'https://gpt-api.hkust-gz.edu.cn/v1' # "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        config['deepseek']['api_key'] = 'Bearer 58d0bacc761d4678855f9582819abcc77a4bacaa54984213905d9d546670638a' # 'sk-d770b774f1aa42a2b17fecbd08bd0362'
+        config['agent']['max_iterations'] = 10
+    # cap3d 58d0bacc761d4678855f9582819abcc77a4bacaa54984213905d9d546670638a
+    # 82a2a8c4fe964a4c8cedc66f7a8b775090b98b5d0591447ea965d3aad35e3805
     # return interior_designer, interior_architect , engineer
     # 1. Load environment variables 
     load_dotenv()
@@ -50,7 +89,7 @@ async def main(room_dimensions, user_preference):
         1. Object name (ex. bed, desk, chair, monitor, bookshelf, etc.)
         2. Architecture style (ex. modern, classic, etc.)
         3. Material (ex. wood, metal, etc.)
-        4. Bounding box size in meters (ex. Length : 1.0m, Width : 1.0m, Height : 1.0m). Only use "Length", "Width", "Height" as keys for the size of the bounding box!
+        4. Bounding box size in meters (ex. Length : 1.0, Width : 1.0, Height : 1.0). Only use "Length", "Width", "Height" as keys for the size of the bounding box!
         5. Quantity (ex. 1, 2, 3, etc.)
 
         IMPORTANT: Do not suggest any objects related to doors or windows, such as curtains, blinds, etc.
@@ -115,18 +154,13 @@ async def main(room_dimensions, user_preference):
         DO NOT use ```json tags.
         """
 
-    try:
-        # Interactive chat loop
-        print("Agent chat started. Type 'exit', 'quit', or 'bye' to end the conversation.")
-        # while True:
-        interior_designer.set_config(config_designer)
-        await interior_designer.initialize()
-        user_input_designer = f"""
+    # try:
+    user_input_designer = f"""
         The room has the size {room_dimensions[0]}m x {room_dimensions[1]}m x {room_dimensions[2]}m
         Suggest a reasonal number of objects according to the room size. They should be fit in the room.
         User Preference (in triple backquotes):
         ```
-        {user_preference}
+        {user_preference} with 12 objects
         ```
         Room layout elements in the room (in triple backquotes):
         ```
@@ -134,104 +168,115 @@ async def main(room_dimensions, user_preference):
         ```
         json
         """
-        # user_input = input("\nYou: ")
+        # Interactive chat loop
+    print("Agent chat started. Type 'exit', 'quit', or 'bye' to end the conversation.")
+    # while True:
+    interior_designer.set_config(config_designer)
+    await interior_designer.initialize()
+        
+    print("\n thinking... \n", end="")
+    result_designer = await interior_designer.process_query(user_input_designer)
+    
+    print("Interior Designer: {}".format(result_designer))
+    
+    interior_architect.set_config(config_architect)  
+    await interior_architect.initialize()
 
-        # if user_input_designer.lower() in ('exit', 'quit', 'bye'):
-        #     break
-            
-        print("\n thinking... \n", end="")
-        result_designer = await interior_designer.process_query(user_input_designer)
-        print("Interior Designer: {}".format(result_designer))
+    user_input_architect = f"""
+    The room has the size {room_dimensions[0]}m x {room_dimensions[1]}m x {room_dimensions[2]}m
+    The number of objects in the room is as many as possible, but it should be fit in the room.
+    User Preference (in triple backquotes):
+    ```
+    {user_preference} 
+    ```
+    Room layout elements in the room (in triple backquotes):
+    ```
+    ['south_wall', 'north_wall', 'west_wall', 'east_wall', 'middle of the room', 'ceiling']
+    ```
+    json
+    """
 
-        interior_architect.set_config(config_architect)  
-        await interior_architect.initialize()
+    designer_output = 'Interior Designer suggested the following objects: ' + result_designer
 
-        user_input_architect = f"""
-        The room has the size {room_dimensions[0]}m x {room_dimensions[1]}m x {room_dimensions[2]}m
-        The number of objects in the room is as many as possible, but it should be fit in the room.
-        User Preference (in triple backquotes):
-        ```
-        {user_preference}
-        ```
-        Room layout elements in the room (in triple backquotes):
-        ```
-        ['south_wall', 'north_wall', 'west_wall', 'east_wall', 'middle of the room', 'ceiling']
-        ```
-        json
-        """
+    # if user_input_designer.lower() in ('exit', 'quit', 'bye'):
+    #     break
+    while True: # TODO: 这里应该不需要check json format
 
-        designer_output = 'Interior Designer suggested the following objects: ' + result_designer
-
-        # if user_input_designer.lower() in ('exit', 'quit', 'bye'):
-        #     break
-            
         print("\n thinking... \n", end="")
         result_architect = await interior_architect.process_query(user_input_architect + designer_output)
         print("Interior Architect: {}".format(result_architect))
         
-        def clean_json_string(content):
-            # 使用正则表达式匹配JSON内容
-            pattern = r'```(?:json)?\s*(\{[\s\S]*\})\s*```'
-            match = re.search(pattern, content)
-            if match:
-                return match.group(1)
-            # 如果没有markdown标记，直接返回内容
-            return content.strip()
-        
-        designer_response = json.loads(clean_json_string(result_designer))
-        architect_response = json.loads(clean_json_string(result_architect))
+        check = json_schema_debugger(result_architect)
+        check = 'SUCCESS'
+        print(check)
+        if check == 'SUCCESS':
+            break
+        else:
+            user_input_architect = check
 
-        blocks_designer, blocks_architect = extract_list_from_json(designer_response), extract_list_from_json(architect_response)
-        if len(blocks_designer) != len(blocks_architect):
-            print("Lengths: ", len(blocks_designer), len(blocks_architect))
-            raise ValueError("The number of blocks from the designer and architect should be the same! Please generate again.")
+    designer_response = json.loads(clean_json_string(result_designer))
+    architect_response = json.loads(clean_json_string(result_architect))
+    blocks_designer, blocks_architect = extract_list_from_json(designer_response), extract_list_from_json(architect_response)
+    if len(blocks_designer) != len(blocks_architect):
+        print("Lengths: ", len(blocks_designer), len(blocks_architect))
+        raise ValueError("The number of blocks from the designer and architect should be the same! Please generate again.")
 
-        engineer.set_config(config_engineer)   
-        await engineer.initialize()
-        json_data = None
-        for d_block, a_block in zip(blocks_designer, blocks_architect):
-            prompt = str(d_block) + "\n" + str(a_block)
-            object_ids = [item["new_object_id"] for item in json_data["objects_in_room"]] if json_data is not None else []
-            user_input_engineer = f"""
-                Room layout elements in the room (in triple backquotes):
-                ```
-                ['south_wall', 'north_wall', 'west_wall', 'east_wall', 'middle of the floor', 'ceiling']
-                ```
-                Array of objects in the room (in triple backquotes):
-                ```
-                {object_ids}
-                ```
-                Objects to be placed in the room (in triple backquotes):
-                ```
-                {prompt}
-                ```
-                json
-                """
+
+    engineer.set_config(config_engineer)   
+    await engineer.initialize()
+    json_data = None
+    for d_block, a_block in zip(blocks_designer, blocks_architect):
+        prompt = str(d_block) + "\n" + str(a_block)
+        object_ids = [item["new_object_id"] for item in json_data["objects_in_room"]] if json_data is not None else []
+        user_input_engineer = f"""
+            Room layout elements in the room (in triple backquotes):
+            ```
+            ['south_wall', 'north_wall', 'west_wall', 'east_wall', 'middle of the floor', 'ceiling']
+            ```
+            Array of objects in the room (in triple backquotes):
+            ```
+            {object_ids}
+            ```
+            Objects to be placed in the room (in triple backquotes):
+            ```
+            {prompt}
+            ```
+            json
+            """
+        while True:
             result_engineer = await engineer.process_query(user_input_engineer)
-            if json_data is None:
-                json_data = json.loads(result_engineer)
-            else:
-                json_data["objects_in_room"] += json.loads(result_engineer)['objects_in_room']
-        
-            print("Engineer: {}".format(result_engineer))
             
-        print(json_data)
-        with open('scene_graph_after_engineer.json', 'w') as f:
-            json.dump(json_data, f, indent=4)
-    except:
-        print('Error')
-    finally:
+            check = json_schema_debugger(result_engineer)
+            
+            print(check)
+            if check == 'SUCCESS':
+                break
+            else:
+                user_input_engineer = check
+        if json_data is None:
+            json_data = json.loads(result_engineer)
+        else:
+            json_data["objects_in_room"] += json.loads(result_engineer)['objects_in_room']
+    
+        print("Engineer: {}".format(result_engineer))
+        
+    print(json_data)
+    with open('scene_graph_after_engineer.json', 'w') as f:
+        json.dump(json_data, f, indent=4)
+    # except:
+    #     print('Error')
+    # finally:
         # Shut down the agent gracefully
-        await interior_designer.shutdown()            
-        await interior_architect.shutdown()
-        await engineer.shutdown()
-        print("\nAgent chat ended.")
+    await interior_designer.shutdown()            
+    await interior_architect.shutdown()
+    await engineer.shutdown()
+    print("\nAgent chat ended.")
 
 if __name__ == "__main__":
     import sys
     
     # 默认参数
-    room_dimensions = [4, 5, 2.8]
+    room_dimensions = [5, 5, 2.8]
     
     # 如果有命令行参数，则使用命令行参数
     if len(sys.argv) > 1:

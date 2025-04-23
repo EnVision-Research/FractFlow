@@ -2,77 +2,12 @@
     "objects_in_room": [
         {
             "new_object_id": "sofa_1",
-            "style": "modern",
-            "material": "fabric",
+            "style": "Modern",
+            "material": "Fabric",
             "size_in_meters": {
                 "length": 2.0,
-                "width": 0.9,
+                "width": 1.0,
                 "height": 0.8
-            },
-            "is_on_the_floor": true,
-            "facing": "south_wall",
-            "placement": {
-                "room_layout_elements": [
-                    {
-                        "layout_element_id": "middle of the room",
-                        "preposition": "on"
-                    }
-                ],
-                "objects_in_room": []
-            },
-            "rotation": {
-                "z_angle": 180.0
-            },
-            "cluster": {
-                "constraint_area": {
-                    "x_neg": 0.0,
-                    "x_pos": 0.0,
-                    "y_neg": 0.0,
-                    "y_pos": 2.8
-                }
-            }
-        },
-        {
-            "new_object_id": "coffee_table_1",
-            "style": "modern",
-            "material": "wood",
-            "size_in_meters": {
-                "length": 1.2,
-                "width": 0.6,
-                "height": 0.45
-            },
-            "is_on_the_floor": true,
-            "facing": "south_wall",
-            "placement": {
-                "room_layout_elements": [],
-                "objects_in_room": [
-                    {
-                        "object_id": "sofa_1",
-                        "preposition": "in front",
-                        "is_adjacent": true
-                    }
-                ]
-            },
-            "rotation": {
-                "z_angle": 180.0
-            },
-            "cluster": {
-                "constraint_area": {
-                    "x_neg": 0.8,
-                    "x_pos": 0.8,
-                    "y_neg": 0.0,
-                    "y_pos": 0.0
-                }
-            }
-        },
-        {
-            "new_object_id": "tv_stand_1",
-            "style": "modern",
-            "material": "metal",
-            "size_in_meters": {
-                "length": 1.5,
-                "width": 0.4,
-                "height": 0.5
             },
             "is_on_the_floor": true,
             "facing": "north_wall",
@@ -90,6 +25,104 @@
             },
             "cluster": {
                 "constraint_area": {
+                    "x_neg": 1.4,
+                    "x_pos": 1.4,
+                    "y_neg": 0.0,
+                    "y_pos": 1.2
+                }
+            }
+        },
+        {
+            "new_object_id": "coffee_table_1",
+            "style": "Contemporary",
+            "material": "Wood",
+            "size_in_meters": {
+                "length": 1.2,
+                "width": 0.6,
+                "height": 0.4
+            },
+            "is_on_the_floor": true,
+            "facing": "north_wall",
+            "placement": {
+                "room_layout_elements": [],
+                "objects_in_room": [
+                    {
+                        "object_id": "sofa_1",
+                        "preposition": "in front",
+                        "is_adjacent": true
+                    }
+                ]
+            },
+            "rotation": {
+                "z_angle": 0.0
+            },
+            "cluster": {
+                "constraint_area": {
+                    "x_neg": 0.0,
+                    "x_pos": 0.0,
+                    "y_neg": 0.0,
+                    "y_pos": 0.0
+                }
+            }
+        },
+        {
+            "new_object_id": "television_stand_1",
+            "style": "Minimalist",
+            "material": "Metal",
+            "size_in_meters": {
+                "length": 1.5,
+                "width": 0.4,
+                "height": 0.5
+            },
+            "is_on_the_floor": true,
+            "facing": "south_wall",
+            "placement": {
+                "room_layout_elements": [
+                    {
+                        "layout_element_id": "north_wall",
+                        "preposition": "on"
+                    }
+                ],
+                "objects_in_room": []
+            },
+            "rotation": {
+                "z_angle": 180.0
+            },
+            "cluster": {
+                "constraint_area": {
+                    "x_neg": 0.0,
+                    "x_pos": 0.0,
+                    "y_neg": 0.0,
+                    "y_pos": 0.0
+                }
+            }
+        },
+        {
+            "new_object_id": "television_1",
+            "style": "Modern",
+            "material": "Plastic",
+            "size_in_meters": {
+                "length": 1.2,
+                "width": 0.1,
+                "height": 0.7
+            },
+            "is_on_the_floor": false,
+            "facing": "south_wall",
+            "placement": {
+                "room_layout_elements": [],
+                "objects_in_room": [
+                    {
+                        "object_id": "television_stand_1",
+                        "preposition": "on",
+                        "is_adjacent": true
+                    }
+                ]
+            },
+            "rotation": {
+                "z_angle": 180.0
+            },
+            "cluster": {
+                "constraint_area": {
                     "x_neg": 0.0,
                     "x_pos": 0.0,
                     "y_neg": 0.0,
@@ -99,19 +132,150 @@
         },
         {
             "new_object_id": "bookshelf_1",
-            "style": "classic",
-            "material": "wood",
+            "style": "Classic",
+            "material": "Wood",
             "size_in_meters": {
                 "length": 1.0,
                 "width": 0.3,
+                "height": 2.0
+            },
+            "is_on_the_floor": true,
+            "facing": "west_wall",
+            "placement": {
+                "room_layout_elements": [
+                    {
+                        "layout_element_id": "east_wall",
+                        "preposition": "on"
+                    }
+                ],
+                "objects_in_room": []
+            },
+            "rotation": {
+                "z_angle": 270.0
+            },
+            "cluster": {
+                "constraint_area": {
+                    "x_neg": 0.5,
+                    "x_pos": 0.0,
+                    "y_neg": 0.0,
+                    "y_pos": 0.0
+                }
+            }
+        },
+        {
+            "new_object_id": "single_armchair_1",
+            "style": "Modern",
+            "material": "Leather",
+            "size_in_meters": {
+                "length": 0.9,
+                "width": 0.8,
+                "height": 0.8
+            },
+            "is_on_the_floor": true,
+            "facing": "north_wall",
+            "placement": {
+                "room_layout_elements": [],
+                "objects_in_room": [
+                    {
+                        "object_id": "sofa_1",
+                        "preposition": "right of",
+                        "is_adjacent": true
+                    }
+                ]
+            },
+            "rotation": {
+                "z_angle": 0.0
+            },
+            "cluster": {
+                "constraint_area": {
+                    "x_neg": 0.0,
+                    "x_pos": 0.5,
+                    "y_neg": 0.0,
+                    "y_pos": 0.0
+                }
+            }
+        },
+        {
+            "new_object_id": "single_armchair_2",
+            "style": "Modern",
+            "material": "Leather",
+            "size_in_meters": {
+                "length": 0.9,
+                "width": 0.8,
+                "height": 0.8
+            },
+            "is_on_the_floor": true,
+            "facing": "north_wall",
+            "placement": {
+                "room_layout_elements": [],
+                "objects_in_room": [
+                    {
+                        "object_id": "sofa_1",
+                        "preposition": "left of",
+                        "is_adjacent": true
+                    }
+                ]
+            },
+            "rotation": {
+                "z_angle": 0.0
+            },
+            "cluster": {
+                "constraint_area": {
+                    "x_neg": 0.5,
+                    "x_pos": 0.0,
+                    "y_neg": 0.0,
+                    "y_pos": 0.0
+                }
+            }
+        },
+        {
+            "new_object_id": "floor_lamp_1",
+            "style": "Modern",
+            "material": "Metal",
+            "size_in_meters": {
+                "length": 0.5,
+                "width": 0.5,
                 "height": 1.8
+            },
+            "is_on_the_floor": true,
+            "facing": "west_wall",
+            "placement": {
+                "room_layout_elements": [],
+                "objects_in_room": [
+                    {
+                        "object_id": "bookshelf_1",
+                        "preposition": "left of",
+                        "is_adjacent": false
+                    }
+                ]
+            },
+            "rotation": {
+                "z_angle": 270.0
+            },
+            "cluster": {
+                "constraint_area": {
+                    "x_neg": 0.0,
+                    "x_pos": 0.0,
+                    "y_neg": 0.0,
+                    "y_pos": 0.0
+                }
+            }
+        },
+        {
+            "new_object_id": "rug_1",
+            "style": "Bohemian",
+            "material": "Wool",
+            "size_in_meters": {
+                "length": 2.5,
+                "width": 2.0,
+                "height": 0.01
             },
             "is_on_the_floor": true,
             "facing": "east_wall",
             "placement": {
                 "room_layout_elements": [
                     {
-                        "layout_element_id": "west_wall",
+                        "layout_element_id": "middle of the room",
                         "preposition": "on"
                     }
                 ],
@@ -130,61 +294,28 @@
             }
         },
         {
-            "new_object_id": "armchair_1",
-            "style": "classic",
-            "material": "leather",
+            "new_object_id": "side_table_1",
+            "style": "Modern",
+            "material": "Glass",
             "size_in_meters": {
-                "length": 0.8,
-                "width": 0.8,
-                "height": 1.0
+                "length": 0.5,
+                "width": 0.5,
+                "height": 0.5
             },
             "is_on_the_floor": true,
-            "facing": "south_wall",
+            "facing": "north_wall",
             "placement": {
                 "room_layout_elements": [],
                 "objects_in_room": [
                     {
-                        "object_id": "coffee_table_1",
+                        "object_id": "single_armchair_1",
                         "preposition": "right of",
                         "is_adjacent": true
                     }
                 ]
             },
             "rotation": {
-                "z_angle": 180.0
-            },
-            "cluster": {
-                "constraint_area": {
-                    "x_neg": 0.0,
-                    "x_pos": 0.0,
-                    "y_neg": 0.3,
-                    "y_pos": 0.0
-                }
-            }
-        },
-        {
-            "new_object_id": "armchair_2",
-            "style": "classic",
-            "material": "leather",
-            "size_in_meters": {
-                "length": 0.8,
-                "width": 0.8,
-                "height": 1.0
-            },
-            "is_on_the_floor": true,
-            "facing": "south_wall",
-            "placement": {
-                "room_layout_elements": [],
-                "objects_in_room": [
-                    {
-                        "object_id": "coffee_table_1",
-                        "preposition": "left of",
-                        "is_adjacent": true
-                    }
-                ]
-            },
-            "rotation": {
-                "z_angle": 180.0
+                "z_angle": 0.0
             },
             "cluster": {
                 "constraint_area": {
@@ -196,28 +327,60 @@
             }
         },
         {
-            "new_object_id": "floor_lamp_1",
-            "style": "modern",
-            "material": "metal",
+            "new_object_id": "side_table_2",
+            "style": "Modern",
+            "material": "Glass",
             "size_in_meters": {
-                "length": 0.3,
-                "width": 0.3,
-                "height": 1.6
+                "length": 0.5,
+                "width": 0.5,
+                "height": 0.5
             },
             "is_on_the_floor": true,
-            "facing": "west_wall",
+            "facing": "north_wall",
             "placement": {
                 "room_layout_elements": [],
                 "objects_in_room": [
                     {
-                        "object_id": "armchair_1",
-                        "preposition": "behind",
-                        "is_adjacent": false
+                        "object_id": "single_armchair_2",
+                        "preposition": "left of",
+                        "is_adjacent": true
                     }
                 ]
             },
             "rotation": {
-                "z_angle": 270.0
+                "z_angle": 0.0
+            },
+            "cluster": {
+                "constraint_area": {
+                    "x_neg": 0.0,
+                    "x_pos": 0.0,
+                    "y_neg": 0.0,
+                    "y_pos": 0.0
+                }
+            }
+        },
+        {
+            "new_object_id": "ceiling_light_fixture_1",
+            "style": "Modern",
+            "material": "Glass",
+            "size_in_meters": {
+                "length": 0.8,
+                "width": 0.8,
+                "height": 0.3
+            },
+            "is_on_the_floor": false,
+            "facing": "south_wall",
+            "placement": {
+                "room_layout_elements": [
+                    {
+                        "layout_element_id": "ceiling",
+                        "preposition": "on"
+                    }
+                ],
+                "objects_in_room": []
+            },
+            "rotation": {
+                "z_angle": 180.0
             },
             "cluster": {
                 "constraint_area": {
