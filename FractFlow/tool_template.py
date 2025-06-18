@@ -243,11 +243,9 @@ class ToolTemplate:
         
         # Characteristic files that indicate project root
         root_indicators = [
-            'pyproject.toml',
-            'README.md', 
-            '.git',
-            'requirements.txt',
-            'setup.py'
+            'pyproject.toml',  # 最可靠的项目根标识
+            '.git',            # 版本控制根目录
+            'setup.py'         # Python包根目录
         ]
         
         # Search upwards from current directory

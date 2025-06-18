@@ -2,6 +2,48 @@ import os
 import json
 from typing import Dict, Tuple, List, Any, Optional
 from pathlib import Path
+from PIL import Image
+import base64
+import io
+
+
+def normalize_path(path: str) -> str:
+    """
+    Normalize a file path by expanding ~ to user's home directory
+    and resolving relative paths.
+    
+    Args:
+        path: The input path to normalize
+        
+    Returns:
+        The normalized absolute path
+    """
+    # Expand ~ to user's home directory
+    expanded_path = os.path.expanduser(path)
+    
+    # Convert to absolute path if relative
+    if not os.path.isabs(expanded_path):
+        expanded_path = os.path.abspath(expanded_path)
+        
+    return expanded_path
+
+
+def encode_image(image: Image.Image, size: tuple[int, int] = (1024, 1024)) -> str:
+    """
+    Encode an image to base64 string.
+    
+    Args:
+        image: PIL Image object
+        size: Maximum size for thumbnail
+        
+    Returns:
+        Base64 encoded string
+    """
+    image.thumbnail(size)
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    base64_image = base64.b64encode(buffer.getvalue()).decode('utf-8')
+    return base64_image
 
 
 class WorkflowManager:
@@ -134,9 +176,29 @@ class WorkflowManager:
                 node_info = input_nodes[param_name]
                 node_id = node_info["node_id"]
                 field_path = node_info["field"]
+                param_type = node_info.get("type", "string")
+                
+                # 处理不同类型的参数
+                if param_type == "base64Images":
+                    # 处理图片参数：文件路径转base64
+                    try:
+                        normalized_path = normalize_path(param_value)
+                        if not os.path.exists(normalized_path):
+                            raise ValueError(f"Image file not found: {param_value}")
+                        
+                        image = Image.open(normalized_path)
+                        base64_str = encode_image(image)
+                        
+                        # 将base64字符串包装成ComfyUI期望的格式
+                        processed_value = f'["{base64_str}"]'
+                    except Exception as e:
+                        raise ValueError(f"Failed to process image parameter '{param_name}': {e}")
+                else:
+                    # 普通参数直接使用原值
+                    processed_value = param_value
                 
                 # 按路径设置值
-                self._set_nested_value(filled_workflow, node_id, field_path, param_value)
+                self._set_nested_value(filled_workflow, node_id, field_path, processed_value)
         
         return filled_workflow
     
@@ -216,7 +278,17 @@ class WorkflowManager:
             "number": (int, float)
         }
         
-        if expected_type in type_mapping:
+        if expected_type == "base64Images":
+            # 对于图片参数，验证是否为字符串（文件路径）
+            if not isinstance(value, str):
+                return False
+            # 可以进一步验证文件是否存在和格式
+            try:
+                normalized_path = normalize_path(value)
+                return os.path.exists(normalized_path)
+            except:
+                return False
+        elif expected_type in type_mapping:
             expected_python_type = type_mapping[expected_type]
             return isinstance(value, expected_python_type)
         

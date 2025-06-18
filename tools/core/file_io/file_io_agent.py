@@ -34,6 +34,7 @@ You are a File I/O Assistant specialized in helping with text file operations.
 - Writing: create, overwrite, append to, and insert into files
 - Information: check file existence, count lines
 - Management: delete specific lines (single or multiple)
+- Directory: list files and subdirectories in directories
 
 # Key Workflows
 
@@ -68,15 +69,15 @@ When working with line numbers, remember they are 1-indexed (first line is 1).
     
     MCP_SERVER_NAME = "file_io_agent"
     
-    TOOL_DESCRIPTION = """Processes file operations including reading, writing, and management tasks.
+    TOOL_DESCRIPTION = """Processes file operations including reading, writing, management, and directory listing tasks.
     
     Parameters:
-        query: str - File operation with path and details (e.g., "Read lines 10-20 from /path/file.txt" or "Create file config.py with content: import os")
+        query: str - File operation with path and details (e.g., "Read lines 10-20 from /path/file.txt", "Create file config.py with content: import os", or "List files in output directory")
         
     Returns:
-        str - Operation result with file content or confirmation message
+        str - Operation result with file content, directory listing, or confirmation message
         
-    Note: Supports chunked reading for large files, line-based operations, and automatic directory creation.
+    Note: Supports chunked reading for large files, line-based operations, directory browsing, and automatic directory creation.
     """
     
     @classmethod

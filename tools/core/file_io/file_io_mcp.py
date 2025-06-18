@@ -765,7 +765,81 @@ def delete_line(file_path: str, line_number: int) -> Dict[str, Union[bool, str, 
             "success": False,
             "error": str(e),
             "message": f"Error deleting line: {str(e)}"
-        } 
+        }
+
+
+@mcp.tool()
+def list_directory(dir_path: str) -> Dict[str, Union[bool, str, List[str]]]:
+    """
+    Lists files and directories in the specified directory.
+    
+    Parameters:
+        dir_path: str - Absolute or relative path to the directory
+    
+    Returns:
+        dict with keys:
+        - success: bool - True if operation succeeded
+        - path: str - Normalized absolute path to the directory
+        - files: list - List of file names in the directory
+        - directories: list - List of subdirectory names
+        - all_items: list - List of all items (files + directories)
+        - message: str - Success/error message
+    
+    Examples:
+        "List files in output directory" → list_directory(dir_path="output")
+        "Show contents of /home/user/documents" → list_directory(dir_path="/home/user/documents")
+    """
+    try:
+        path = normalize_path(dir_path)
+        
+        # Check if directory exists
+        if not os.path.exists(path):
+            return {
+                "success": False,
+                "error": "Directory not found",
+                "message": f"Directory does not exist: {path}. Please check the directory path."
+            }
+        
+        # Check if it's actually a directory
+        if not os.path.isdir(path):
+            return {
+                "success": False,
+                "error": "Not a directory",
+                "message": f"Path exists but is not a directory: {path}. Use file operations for files."
+            }
+        
+        # List directory contents
+        all_items = os.listdir(path)
+        files = []
+        directories = []
+        
+        for item in all_items:
+            item_path = os.path.join(path, item)
+            if os.path.isfile(item_path):
+                files.append(item)
+            elif os.path.isdir(item_path):
+                directories.append(item)
+        
+        return {
+            "success": True,
+            "path": path,
+            "files": files,
+            "directories": directories,
+            "all_items": all_items,
+            "message": f"Found {len(files)} files and {len(directories)} directories in {path}"
+        }
+    except PermissionError:
+        return {
+            "success": False,
+            "error": "Permission denied",
+            "message": f"Cannot access directory due to permission issues: {path}. Please check directory permissions."
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": f"Error listing directory: {str(e)}"
+        }
     
 if __name__ == "__main__":
     # Run the MCP server
