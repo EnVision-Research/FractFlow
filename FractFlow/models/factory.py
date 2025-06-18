@@ -49,6 +49,11 @@ def create_model(provider: Optional[str] = None, config: Optional[ConfigManager]
         model = QwenModel(config=config)
         logger.info(f"Created Qwen model")
         return model
+    elif provider == 'siliconflow':
+        from .siliconflow_model import SiliconFlowModel
+        model = SiliconFlowModel(config=config)
+        logger.info(f"Created SiliconFlow model")
+        return model
     elif provider == 'openai':
         # Note: This part would be properly implemented when OpenAIModel is created
         # For now, raising an error to indicate it's not implemented yet

@@ -44,6 +44,13 @@ class ConfigManager:
         qwen_model: str = 'qwen-plus',
         qwen_max_tokens: int = 4096,
         qwen_temperature: float = 1.0,
+
+        # SiliconFlow配置
+        siliconflow_api_key: Optional[str] = None,
+        siliconflow_base_url: str = 'https://api.siliconflow.cn/v1/chat/completions',
+        siliconflow_model: str = 'siliconflow-chat',
+        siliconflow_max_tokens: int = 4096,
+        siliconflow_temperature: float = 1.0,
         
         # Agent行为配置
         max_iterations: int = 10,
@@ -94,6 +101,8 @@ class ConfigManager:
             openai_api_key = os.getenv('COMPLETION_API_KEY')
         if qwen_api_key is None:
             qwen_api_key = os.getenv('QWEN_API_KEY')
+        if siliconflow_api_key is None:
+            siliconflow_api_key = os.getenv('SILICONFLOW_API_KEY')
         
         # 构建内部配置字典结构
         self._config = {
@@ -118,6 +127,13 @@ class ConfigManager:
                 'model': qwen_model,
                 'max_tokens': qwen_max_tokens,
                 'temperature': qwen_temperature,
+            },
+            'siliconflow': {
+                'api_key': siliconflow_api_key,
+                'base_url': siliconflow_base_url,
+                'model': siliconflow_model,
+                'max_tokens': siliconflow_max_tokens,
+                'temperature': siliconflow_temperature,
             },
             'agent': {
                 'max_iterations': max_iterations,
