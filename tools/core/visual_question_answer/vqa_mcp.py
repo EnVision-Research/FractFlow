@@ -90,6 +90,58 @@ async def Visual_Question_Answering(image_path: str, prompt: str) -> str:
     )
     return completion.choices[0].message.content
 
+@mcp.tool()
+async def Visual_Question_Answering_Multiple_Images(image_paths: List[str], prompt: str) -> str:
+    '''
+    This tool uses Qwen-VL-Plus model to perform visual question answering or image analysis on multiple images.
+    All images are automatically resized to a maximum of 512x512 pixels before processing.
+    
+    Args:
+        image_paths (List[str]): List of full paths to the image files to process. Each path should be accessible
+                                by the system and point to a valid image file (e.g., JPG, PNG).
+        prompt (str): Text prompt describing what you want to know about the images. This can be:
+                     - A comparative question (e.g., "Compare these images and describe the differences")
+                     - A collective analysis (e.g., "What common elements appear in all these images?")
+                     - Individual analysis (e.g., "Describe each image separately")
+                     - A specific analytical instruction (e.g., "Count objects across all images")
+    
+    Returns:
+        str: A detailed text response from the VLM model analyzing all images according to the prompt.
+             The response will consider all provided images in the context of the prompt.
+    '''
+    if not image_paths:
+        return "Error: No image paths provided"
+    
+    # Normalize all paths and load images
+    content_items = [{"type": "text", "text": prompt}]
+    
+    for i, image_path in enumerate(image_paths):
+        try:
+            normalized_path = normalize_path(image_path)
+            base64_image, meta_info = load_image(normalized_path, (512, 512))
+            
+            # Add image to content with index for reference
+            content_items.append({
+                "type": "image_url",
+                "image_url": {"url": f'data:image/png;base64,{base64_image}'}
+            })
+        except Exception as e:
+            return f"Error loading image {i+1} ('{image_path}'): {str(e)}"
+    
+    client = OpenAI(
+        api_key=os.getenv('QWEN_API_KEY'),
+        base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+    )
+    
+    try:
+        completion = client.chat.completions.create(
+            model="qwen-vl-max",
+            messages=[{"role": "user", "content": content_items}]
+        )
+        return completion.choices[0].message.content
+    except Exception as e:
+        return f"Error during VLM analysis: {str(e)}"
+
 if __name__ == "__main__":
     # Initialize and run the server
     mcp.run(transport='stdio') 
