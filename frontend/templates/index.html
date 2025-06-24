@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 儿童涂鸦美化智能体</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎨</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🎨 儿童涂鸦美化智能体</h1>
+                <p>将简笔画转换为精美的绘本级插画，保持童真精神！</p>
+            </div>
+        </header>
+
+        <!-- 主要内容区域 -->
+        <main class="main-content">
+            <!-- 聊天区域 -->
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message system-message">
+                        <div class="message-content">
+                            <p>👋 欢迎使用儿童涂鸦美化智能体！</p>
+                            <p>请上传一张3-6岁儿童的涂鸦作品，我将为您转换为精美的绘本级插画。</p>
+                            <div class="features">
+                                <div class="feature">
+                                    <span class="feature-icon">🧠</span>
+                                    <span>AI智能分析儿童内心表达</span>
+                                </div>
+                                <div class="feature">
+                                    <span class="feature-icon">🎨</span>
+                                    <span>专业绘本级插画美化</span>
+                                </div>
+                                <div class="feature">
+                                    <span class="feature-icon">💝</span>
+                                    <span>保持原画童真精神</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="input-container">
+                <form id="uploadForm" class="upload-form">
+                    <!-- 图片上传 -->
+                    <div class="upload-section">
+                        <div class="file-upload-container">
+                            <input type="file" id="imageInput" name="image" accept="image/*" required>
+                            <label for="imageInput" class="file-upload-label">
+                                <span class="upload-icon">📁</span>
+                                <span class="upload-text">选择涂鸦图片</span>
+                                <span class="upload-hint">支持 PNG, JPG 格式</span>
+                            </label>
+                            <div class="file-preview" id="filePreview" style="display: none;">
+                                <img id="previewImage" src="" alt="预览">
+                                <div class="file-info">
+                                    <span id="fileName"></span>
+                                    <button type="button" id="removeFile" class="remove-btn">✕</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 描述输入 -->
+                    <div class="description-section">
+                        <div class="input-group">
+                            <textarea 
+                                id="descriptionInput" 
+                                name="description" 
+                                placeholder="描述这幅画的内容（可选）&#10;例如：我画的是我和妈妈在花园里玩..."
+                                rows="3"
+                            ></textarea>
+                            <button type="submit" id="submitBtn" class="submit-btn" disabled>
+                                <span class="btn-text">✨ 开始美化</span>
+                                <span class="btn-loading" style="display: none;">
+                                    <span class="spinner"></span>
+                                    处理中...
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <!-- 进度提示 -->
+        <div id="progressModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="progress-container">
+                    <div class="progress-icon">🎨</div>
+                    <h3>AI 正在处理您的涂鸦</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p id="progressText">准备中...</p>
+                    <div class="progress-steps">
+                        <div class="step" id="step1">
+                            <span class="step-icon">🧠</span>
+                            <span class="step-text">分析理解</span>
+                        </div>
+                        <div class="step" id="step2">
+                            <span class="step-icon">🎨</span>
+                            <span class="step-text">插画美化</span>
+                        </div>
+                        <div class="step" id="step3">
+                            <span class="step-icon">✨</span>
+                            <span class="step-text">完成输出</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html> 
