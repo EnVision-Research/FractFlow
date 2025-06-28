@@ -1,0 +1,336 @@
+.agent-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all var(--duration-normal) ease;
+  user-select: none;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Glow effect */
+.card-glow {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, var(--agent-color), transparent, var(--agent-color));
+  border-radius: var(--radius-lg);
+  opacity: 0;
+  transition: opacity var(--duration-normal) ease;
+  z-index: -1;
+}
+
+.agent-card:hover .card-glow {
+  opacity: 0.3;
+  animation: glow-pulse 2s infinite;
+}
+
+.agent-card.selected .card-glow {
+  opacity: 0.5;
+  animation: glow-pulse 1.5s infinite;
+}
+
+/* Scan lines effect */
+.scan-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 255, 0.02) 2px,
+    rgba(0, 255, 255, 0.02) 4px
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--duration-normal) ease;
+}
+
+.agent-card:hover .scan-lines {
+  opacity: 1;
+}
+
+/* Card content */
+.card-content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.agent-type-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  background: rgba(255, 255, 255, 0.1);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--agent-color);
+  font-family: var(--font-mono);
+}
+
+.type-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--agent-color);
+  box-shadow: 0 0 8px var(--agent-color);
+  animation: pulse 2s infinite;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  position: relative;
+}
+
+.status-indicator.online {
+  background: var(--primary-green);
+  box-shadow: 0 0 10px var(--primary-green);
+}
+
+.status-indicator.online::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  background: var(--primary-green);
+  border-radius: 50%;
+  animation: ping 2s infinite;
+}
+
+/* Body */
+.card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.agent-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+  background: linear-gradient(135deg, var(--text-primary), var(--agent-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.agent-path {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
+  opacity: 0.8;
+}
+
+.agent-description {
+  margin-top: var(--spacing-sm);
+}
+
+.agent-description p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Footer */
+.card-footer {
+  margin-top: auto;
+  padding-top: var(--spacing-md);
+}
+
+.action-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all var(--duration-normal) ease;
+}
+
+.agent-card:hover .action-hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hint-text {
+  font-size: 0.8rem;
+  color: var(--agent-color);
+  font-weight: 500;
+}
+
+.hint-icon {
+  font-size: 1rem;
+  color: var(--agent-color);
+  animation: bounce-right 2s infinite;
+}
+
+/* Ripple effect */
+.ripple-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--agent-color) 0%, transparent 70%);
+  transform: scale(0);
+  opacity: 0;
+}
+
+.agent-card:active .ripple {
+  animation: ripple-effect 0.6s ease-out;
+}
+
+/* Hover states */
+.agent-card:hover {
+  border-color: var(--agent-color);
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 10px 25px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(var(--agent-color), 0.1);
+}
+
+.agent-card:focus {
+  outline: 2px solid var(--agent-color);
+  outline-offset: 2px;
+}
+
+.agent-card.selected {
+  border-color: var(--agent-color);
+  background: var(--bg-card-hover);
+  box-shadow: 
+    0 0 20px rgba(var(--agent-color), 0.3),
+    inset 0 0 20px rgba(var(--agent-color), 0.05);
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes ping {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  75%, 100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes bounce-right {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateX(0);
+  }
+  40% {
+    transform: translateX(3px);
+  }
+  60% {
+    transform: translateX(1px);
+  }
+}
+
+@keyframes ripple-effect {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .agent-card {
+    padding: var(--spacing-md);
+    min-height: 160px;
+  }
+  
+  .agent-name {
+    font-size: 1.1rem;
+  }
+  
+  .agent-path {
+    font-size: 0.8rem;
+  }
+  
+  .agent-description p {
+    font-size: 0.85rem;
+  }
+}
+
+/* Loading state */
+.agent-card.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.agent-card.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 255, 255, 0.1),
+    transparent
+  );
+  animation: loading-shimmer 1.5s infinite;
+}
+
+/* Error state */
+.agent-card.error {
+  border-color: #ff4444;
+  background: rgba(255, 68, 68, 0.1);
+}
+
+.agent-card.error .agent-name {
+  color: #ff4444;
+} 

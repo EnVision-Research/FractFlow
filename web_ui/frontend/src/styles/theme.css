@@ -1,0 +1,176 @@
+/* Cyberpunk Theme Variables */
+:root {
+  /* Colors */
+  --primary-cyan: #00ffff;
+  --primary-purple: #8b5cf6;
+  --primary-orange: #ff6700;
+  --primary-pink: #ff1493;
+  --primary-green: #00ff41;
+  
+  /* Background */
+  --bg-dark: #0a0a0f;
+  --bg-darker: #050508;
+  --bg-card: rgba(20, 20, 30, 0.85);
+  --bg-card-hover: rgba(30, 30, 45, 0.95);
+  --bg-glass: rgba(255, 255, 255, 0.05);
+  
+  /* Text */
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-muted: #666666;
+  --text-glow: #00ffff;
+  
+  /* Borders and Effects */
+  --border-glow: #00ffff;
+  --border-secondary: #333344;
+  --shadow-glow: 0 0 20px rgba(0, 255, 255, 0.3);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.5);
+  
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--primary-cyan), var(--primary-purple));
+  --gradient-secondary: linear-gradient(135deg, var(--primary-orange), var(--primary-pink));
+  --gradient-bg: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+  
+  /* Typography */
+  --font-mono: 'Fira Code', 'Monaco', 'Cascadia Code', monospace;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  
+  /* Animation Durations */
+  --duration-fast: 0.15s;
+  --duration-normal: 0.3s;
+  --duration-slow: 0.5s;
+  
+  /* Z-Index */
+  --z-background: -1;
+  --z-content: 1;
+  --z-overlay: 10;
+  --z-modal: 100;
+  --z-tooltip: 1000;
+}
+
+/* Animation Keyframes */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--border-glow), 0 0 10px var(--border-glow), 0 0 15px var(--border-glow);
+  }
+  50% {
+    box-shadow: 0 0 10px var(--border-glow), 0 0 20px var(--border-glow), 0 0 30px var(--border-glow);
+  }
+}
+
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+@keyframes matrix-rain {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Utility Classes */
+.glow-text {
+  color: var(--text-glow);
+  text-shadow: 0 0 10px currentColor;
+}
+
+.glow-border {
+  border: 1px solid var(--border-glow);
+  box-shadow: var(--shadow-glow);
+}
+
+.glass-effect {
+  background: var(--bg-glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.scan-lines::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 255, 0.03) 2px,
+    rgba(0, 255, 255, 0.03) 4px
+  );
+  pointer-events: none;
+}
+
+.monospace {
+  font-family: var(--font-mono);
+}
+
+.transition-smooth {
+  transition: all var(--duration-normal) ease;
+}
+
+.hover-glow:hover {
+  animation: glow-pulse 2s infinite;
+} 

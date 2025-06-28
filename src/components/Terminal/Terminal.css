@@ -1,0 +1,371 @@
+.terminal-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-dark);
+  border-left: 1px solid var(--border-secondary);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Terminal Header */
+.terminal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: rgba(0, 0, 0, 0.8);
+  border-bottom: 1px solid var(--border-glow);
+  backdrop-filter: blur(10px);
+  position: relative;
+}
+
+.terminal-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--gradient-primary);
+  opacity: 0.5;
+}
+
+.terminal-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.title-icon {
+  font-size: 1.5rem;
+  color: var(--primary-cyan);
+  animation: pulse 2s infinite;
+}
+
+.title-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.agent-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.session-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Terminal Controls */
+.terminal-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--status-color, var(--border-secondary));
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--status-color, var(--text-muted));
+  box-shadow: 0 0 8px var(--status-color, transparent);
+  animation: pulse 2s infinite;
+}
+
+.status-text {
+  font-size: 0.8rem;
+  color: var(--status-color, var(--text-muted));
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+.reconnect-btn,
+.close-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--duration-normal) ease;
+  font-size: 0.9rem;
+}
+
+.reconnect-btn:hover {
+  background: var(--primary-orange);
+  color: var(--bg-dark);
+  transform: rotate(180deg);
+}
+
+.close-btn:hover {
+  background: #ff4444;
+  color: white;
+}
+
+/* Terminal Body */
+.terminal-body {
+  flex: 1;
+  position: relative;
+  background: var(--bg-dark);
+  overflow: hidden;
+}
+
+.terminal-content {
+  width: 100%;
+  height: 100%;
+  padding: var(--spacing-md);
+}
+
+/* Override xterm styles for cyberpunk theme */
+.terminal-content .xterm {
+  background: transparent !important;
+}
+
+.terminal-content .xterm-viewport {
+  background: transparent !important;
+}
+
+.terminal-content .xterm-screen {
+  background: transparent !important;
+}
+
+/* Scan lines effect */
+.terminal-scanlines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 255, 0.03) 2px,
+    rgba(0, 255, 255, 0.03) 4px
+  );
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* Moving scan line */
+.terminal-scanlines::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--primary-cyan),
+    transparent
+  );
+  animation: scan-line 3s linear infinite;
+  opacity: 0.5;
+}
+
+/* Terminal Placeholder */
+.terminal-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl);
+}
+
+.placeholder-icon {
+  font-size: 4rem;
+  opacity: 0.3;
+  filter: grayscale(1);
+}
+
+.terminal-placeholder h3 {
+  color: var(--text-primary);
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.terminal-placeholder p {
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+/* Terminal Error */
+.terminal-error {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 68, 68, 0.1);
+  border-top: 1px solid #ff4444;
+  padding: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  backdrop-filter: blur(10px);
+}
+
+.error-icon {
+  font-size: 1.2rem;
+}
+
+.error-text {
+  flex: 1;
+  color: #ff4444;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+.error-retry {
+  background: #ff4444;
+  color: white;
+  border: none;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all var(--duration-normal) ease;
+}
+
+.error-retry:hover {
+  background: #ff6666;
+  transform: translateY(-1px);
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .terminal-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .agent-name {
+    font-size: 1rem;
+  }
+  
+  .session-label {
+    font-size: 0.7rem;
+  }
+  
+  .terminal-controls {
+    gap: var(--spacing-sm);
+  }
+  
+  .reconnect-btn,
+  .close-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+  
+  .terminal-content {
+    padding: var(--spacing-sm);
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .terminal-header {
+    border-bottom-width: 2px;
+  }
+  
+  .status-indicator {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .title-icon,
+  .status-dot {
+    animation: none;
+  }
+  
+  .terminal-scanlines::after {
+    display: none;
+  }
+  
+  .reconnect-btn:hover {
+    transform: none;
+  }
+}
+
+/* Focus states for accessibility */
+.reconnect-btn:focus,
+.close-btn:focus,
+.error-retry:focus {
+  outline: 2px solid var(--primary-cyan);
+  outline-offset: 2px;
+}
+
+/* Terminal scrollbar styling */
+.terminal-content ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.terminal-content ::-webkit-scrollbar-track {
+  background: var(--bg-darker);
+}
+
+.terminal-content ::-webkit-scrollbar-thumb {
+  background: var(--primary-cyan);
+  border-radius: 3px;
+}
+
+.terminal-content ::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-purple);
+} 

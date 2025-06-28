@@ -1,0 +1,394 @@
+.app {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-dark);
+}
+
+/* Background Effects */
+.app-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-background);
+  overflow: hidden;
+}
+
+.bg-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: grid-move 20s linear infinite;
+}
+
+.bg-glow {
+  position: absolute;
+  top: 20%;
+  left: 10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: glow-float 8s ease-in-out infinite;
+}
+
+.bg-glow::after {
+  content: '';
+  position: absolute;
+  top: 60%;
+  right: 20%;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(255, 103, 0, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: glow-float 6s ease-in-out infinite reverse;
+}
+
+/* Main Content */
+.app-content {
+  flex: 1;
+  display: flex;
+  position: relative;
+  z-index: var(--z-content);
+}
+
+.grid-panel {
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.terminal-panel {
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Quick Actions Overlay */
+.quick-actions {
+  position: fixed;
+  bottom: 100px;
+  right: 40px;
+  z-index: var(--z-overlay);
+}
+
+.action-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glow);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-glow);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  min-width: 300px;
+}
+
+.action-info h3 {
+  margin: 0 0 var(--spacing-xs) 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-family: var(--font-mono);
+}
+
+.action-info p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: var(--gradient-primary);
+  color: var(--bg-dark);
+  border: none;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-normal) ease;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+}
+
+.button-icon {
+  font-size: 1.2rem;
+  animation: pulse 2s infinite;
+}
+
+/* Status Bar */
+.status-bar {
+  height: 32px;
+  background: rgba(0, 0, 0, 0.9);
+  border-top: 1px solid var(--border-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--spacing-lg);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  z-index: var(--z-overlay);
+  backdrop-filter: blur(10px);
+}
+
+.status-left,
+.status-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--text-secondary);
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.status-indicator.online {
+  background: var(--primary-green);
+  box-shadow: 0 0 8px var(--primary-green);
+  animation: pulse 2s infinite;
+}
+
+.agent-name {
+  color: var(--primary-cyan);
+  font-weight: 500;
+}
+
+.active {
+  color: var(--primary-green);
+}
+
+.inactive {
+  color: var(--text-muted);
+}
+
+/* Animations */
+@keyframes grid-move {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(50px, 50px);
+  }
+}
+
+@keyframes glow-float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translate(30px, -20px) scale(1.1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translate(-20px, 30px) scale(0.9);
+    opacity: 0.2;
+  }
+  75% {
+    transform: translate(40px, 10px) scale(1.05);
+    opacity: 0.35;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .grid-panel {
+    width: 65% !important;
+  }
+  
+  .terminal-panel {
+    width: 35% !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-content {
+    flex-direction: column;
+  }
+  
+  .grid-panel {
+    width: 100% !important;
+    height: 60%;
+  }
+  
+  .terminal-panel {
+    width: 100% !important;
+    height: 40%;
+  }
+  
+  .quick-actions {
+    bottom: 60px;
+    right: 20px;
+    left: 20px;
+  }
+  
+  .action-card {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-md);
+    min-width: unset;
+  }
+  
+  .status-bar {
+    padding: 0 var(--spacing-md);
+    font-size: 0.7rem;
+  }
+  
+  .status-left,
+  .status-right {
+    gap: var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .status-left,
+  .status-right {
+    gap: var(--spacing-sm);
+  }
+  
+  .status-item {
+    font-size: 0.7rem;
+  }
+  
+  .action-card {
+    padding: var(--spacing-md);
+  }
+  
+  .action-button {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.9rem;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .action-card {
+    border-width: 2px;
+  }
+  
+  .status-bar {
+    border-top-width: 2px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .bg-grid {
+    animation: none;
+  }
+  
+  .bg-glow,
+  .bg-glow::after {
+    animation: none;
+  }
+  
+  .status-indicator.online,
+  .button-icon {
+    animation: none;
+  }
+  
+  .action-button:hover {
+    transform: none;
+  }
+}
+
+/* Focus states */
+.action-button:focus {
+  outline: 2px solid var(--primary-cyan);
+  outline-offset: 2px;
+}
+
+/* Performance optimizations */
+.app-background {
+  will-change: transform;
+}
+
+.bg-grid,
+.bg-glow {
+  will-change: transform, opacity;
+}
+
+/* Loading state */
+.app.loading {
+  pointer-events: none;
+}
+
+.app.loading::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Custom scrollbars for the entire app */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-cyan) var(--bg-darker);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--bg-darker);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--primary-cyan);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-purple);
+}
+
+*::-webkit-scrollbar-corner {
+  background: var(--bg-darker);
+} 
