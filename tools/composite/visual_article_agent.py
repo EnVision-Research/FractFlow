@@ -129,8 +129,8 @@ Input format:
         
         load_dotenv()
         return ConfigManager(
-            provider='openrouter',
-            openrouter_model='openai/chatgpt-4o-latest',
+            provider='deepseek',
+            deepseek_model='deepseek-chat',
             max_iterations=50,  # Visual article generation requires many steps
             custom_system_prompt=cls.SYSTEM_PROMPT,
             tool_calling_version='stable'

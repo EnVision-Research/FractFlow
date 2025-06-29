@@ -340,17 +340,33 @@ class ToolTemplate:
         print(f"\n{cls.__name__} Interactive Mode")
         print("Type 'exit', 'quit', or 'bye' to end the conversation.\n")
         
+        # Set stdin to handle UTF-8 properly
+        import sys
+        if hasattr(sys.stdin, 'reconfigure'):
+            sys.stdin.reconfigure(encoding='utf-8', errors='replace')
+        
         agent = await cls.create_agent('agent')
         
         try:
             while True:
-                user_input = input("You: ")
-                if user_input.lower() in ('exit', 'quit', 'bye'):
+                try:
+                    user_input = input("You: ")
+                    if user_input.lower() in ('exit', 'quit', 'bye'):
+                        break
+                    
+                    print("\nProcessing...\n")
+                    result = await agent.process_query(user_input)
+                    print(f"Agent: {result}")
+                except UnicodeDecodeError as e:
+                    print(f"Input encoding error: {e}")
+                    print("Please try again with proper UTF-8 encoding.")
+                    continue
+                except EOFError:
+                    print("\nReceived EOF, ending session.")
                     break
-                
-                print("\nProcessing...\n")
-                result = await agent.process_query(user_input)
-                print(f"Agent: {result}")
+                except KeyboardInterrupt:
+                    print("\nReceived interrupt, ending session.")
+                    break
         finally:
             await agent.shutdown()
             print("\nAgent session ended.")
