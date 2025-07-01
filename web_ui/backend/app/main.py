@@ -10,9 +10,7 @@ app = FastAPI(
 
 # Configure CORS
 origins = [
-    "http://localhost:3000",  # Default React dev server
-    "http://localhost:3001",
-    "http://localhost:5173",  # Default Vite dev server
+    "*",  # Allow all origins during development to enable LAN access
 ]
 
 app.add_middleware(

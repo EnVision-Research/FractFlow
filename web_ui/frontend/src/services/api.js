@@ -1,8 +1,18 @@
 import axios from 'axios';
 
-// API Configuration
-const API_BASE_URL = 'http://localhost:8000';
-const WS_BASE_URL = 'ws://localhost:8000';
+// API Configuration - Dynamic host detection
+const getApiBaseUrl = () => {
+  const hostname = window.location.hostname;
+  return `http://${hostname}:8000`;
+};
+
+const getWsBaseUrl = () => {
+  const hostname = window.location.hostname;
+  return `ws://${hostname}:8000`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
+const WS_BASE_URL = getWsBaseUrl();
 
 // Create axios instance with default config
 const api = axios.create({
