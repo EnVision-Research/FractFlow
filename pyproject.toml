@@ -49,3 +49,6 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 include = ["FractFlow*"]
+
+[tool.uv.workspace]
+members = ["tools/core/file_io"]

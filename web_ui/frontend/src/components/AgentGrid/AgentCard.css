@@ -13,6 +13,12 @@
   flex-direction: column;
 }
 
+/* Expanded state */
+.agent-card.expanded {
+  min-height: auto;
+  z-index: 10;
+}
+
 /* Glow effect */
 .card-glow {
   position: absolute;
@@ -156,6 +162,11 @@
 
 .agent-description {
   margin-top: var(--spacing-sm);
+  position: relative;
+}
+
+.description-content {
+  overflow: hidden;
 }
 
 .agent-description p {
@@ -163,6 +174,44 @@
   color: var(--text-secondary);
   line-height: 1.4;
   margin: 0;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+/* Expand button styles */
+.expand-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--agent-color);
+  cursor: pointer;
+  transition: all var(--duration-fast) ease;
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 2;
+}
+
+.expand-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--agent-color);
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
+}
+
+.expand-button:active {
+  transform: scale(0.98);
+}
+
+.expand-icon {
+  font-size: 0.7rem;
+  transition: transform var(--duration-normal) ease;
+  display: inline-block;
 }
 
 /* Footer */
@@ -185,6 +234,11 @@
   transform: translateY(0);
 }
 
+/* Hide action hint when description is expanded */
+.agent-card.expanded .action-hint {
+  opacity: 0.5;
+}
+
 .hint-text {
   font-size: 0.8rem;
   color: var(--agent-color);
@@ -205,14 +259,15 @@
   right: 0;
   bottom: 0;
   overflow: hidden;
+  border-radius: var(--radius-lg);
   pointer-events: none;
 }
 
 .ripple {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--agent-color) 0%, transparent 70%);
   transform: scale(0);
+  background: radial-gradient(circle, var(--agent-color) 0%, transparent 70%);
   opacity: 0;
 }
 
@@ -220,14 +275,11 @@
   animation: ripple-effect 0.6s ease-out;
 }
 
-/* Hover states */
 .agent-card:hover {
   border-color: var(--agent-color);
-  background: var(--bg-card-hover);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 
+              0 0 20px rgba(0, 255, 255, 0.2);
   transform: translateY(-2px);
-  box-shadow: 
-    0 10px 25px rgba(0, 0, 0, 0.3),
-    0 0 20px rgba(var(--agent-color), 0.1);
 }
 
 .agent-card:focus {
@@ -237,13 +289,11 @@
 
 .agent-card.selected {
   border-color: var(--agent-color);
-  background: var(--bg-card-hover);
-  box-shadow: 
-    0 0 20px rgba(var(--agent-color), 0.3),
-    inset 0 0 20px rgba(var(--agent-color), 0.05);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 
+              0 0 30px rgba(0, 255, 255, 0.4);
+  background: linear-gradient(135deg, var(--bg-card), rgba(0, 255, 255, 0.05));
 }
 
-/* Animations */
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
@@ -258,7 +308,7 @@
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }
-  75%, 100% {
+  100% {
     transform: translate(-50%, -50%) scale(2);
     opacity: 0;
   }
@@ -269,10 +319,10 @@
     transform: translateX(0);
   }
   40% {
-    transform: translateX(3px);
+    transform: translateX(5px);
   }
   60% {
-    transform: translateX(1px);
+    transform: translateX(3px);
   }
 }
 
@@ -283,27 +333,30 @@
   }
 }
 
-/* Responsive design */
 @media (max-width: 768px) {
   .agent-card {
+    min-height: 180px;
     padding: var(--spacing-md);
-    min-height: 160px;
   }
-  
+
   .agent-name {
     font-size: 1.1rem;
   }
-  
+
   .agent-path {
     font-size: 0.8rem;
   }
-  
+
   .agent-description p {
     font-size: 0.85rem;
   }
+
+  .expand-button {
+    padding: var(--spacing-xs);
+    font-size: 0.75rem;
+  }
 }
 
-/* Loading state */
 .agent-card.loading {
   pointer-events: none;
   opacity: 0.7;
@@ -312,25 +365,26 @@
 .agent-card.loading::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(0, 255, 255, 0.1),
-    transparent
-  );
-  animation: loading-shimmer 1.5s infinite;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top: 2px solid var(--agent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-/* Error state */
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
 .agent-card.error {
-  border-color: #ff4444;
-  background: rgba(255, 68, 68, 0.1);
+  border-color: var(--primary-red);
 }
 
 .agent-card.error .agent-name {
-  color: #ff4444;
+  color: var(--primary-red);
 } 

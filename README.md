@@ -391,7 +391,7 @@ This is a typical representative of fractal intelligence, coordinating multiple 
 python tools/composite/visual_article_agent.py --query "Write an article about AI development with illustrations"
 
 # Customized articles
-python tools/composite/visual_article_agent.py --query "设定：一个视觉识别AI统治社会的世界，人类只能依赖它解释图像。主人公却拥有“人类视觉直觉”，并因此被怀疑为异常个体。
+python tools/composite/visual_article_agent.py --query "设定：一个视觉识别AI统治社会的世界，人类只能依赖它解释图像。主人公却拥有"人类视觉直觉"，并因此被怀疑为异常个体。
 要求：以第一人称，写一段剧情片段，展现他与AI模型对图像理解的冲突。
 情绪基调：冷峻、怀疑、诗性。"
 ```
@@ -601,3 +601,29 @@ tools/
 #### Naming Conventions
 - File names: `snake_case`
 - Class names: `PascalCase`
+
+## Recent Updates
+
+### Web UI Tool Description Enhancement (2025-01-20)
+
+Enhanced the web UI to display complete tool descriptions instead of truncating them at 120 characters. 
+
+**Features Added:**
+- Expand/collapse mechanism for tool descriptions
+- Smooth animations using framer-motion
+- Responsive design that adapts to different screen sizes
+- Visual indicators for expandable content
+- Maintains original card layout when content is short
+
+**Technical Implementation:**
+- Added state management to AgentCard component
+- Integrated framer-motion animations for smooth transitions
+- Enhanced CSS styling with proper expand button design
+- Ensured compatibility with existing interaction logic
+- Added proper event handling to prevent conflicts
+
+This enhancement allows users to access complete tool documentation while maintaining a clean interface, supporting FractFlow's philosophy of providing comprehensive information for intelligent decision-making.
+
+## Getting Started
+
+[Rest of existing README content...]
