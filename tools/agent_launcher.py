@@ -13,6 +13,7 @@ import asyncio
 import argparse
 import importlib.util
 import traceback
+import socket
 from pathlib import Path
 from typing import List, Dict, Type
 from fastapi import FastAPI
@@ -25,6 +26,27 @@ project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
 from FractFlow.tool_template import ToolTemplate
+
+
+def get_local_ip() -> str:
+    """获取本机IP地址（连接到外部网络时使用的IP）"""
+    try:
+        # 创建一个socket连接到外部地址来获取本机IP
+        # 使用Google DNS服务器地址，不会实际发送数据
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))
+            local_ip = s.getsockname()[0]
+            return local_ip
+    except Exception:
+        # 如果获取失败，返回localhost
+        return "127.0.0.1"
+
+
+def get_display_ip(bind_host: str) -> str:
+    """根据绑定的host获取用于显示的IP地址"""
+    if bind_host == "0.0.0.0":
+        return get_local_ip()
+    return bind_host
 
 
 class AgentLauncher:
@@ -227,13 +249,14 @@ def main():
     app = launcher.create_app()
     
     # 显示启动信息
+    display_ip = get_display_ip(args.host)
     print(f"\n🚀 Starting FractFlow Multi-Agent Server")
-    print(f"📍 Server URL: http://{args.host}:{args.port}")
-    print(f"📖 API Documentation: http://{args.host}:{args.port}/docs")
-    print(f"🔍 Health Check: http://{args.host}:{args.port}/health")
+    print(f"📍 Server URL: http://{display_ip}:{args.port}")
+    print(f"📖 API Documentation: http://{display_ip}:{args.port}/docs")
+    print(f"🔍 Health Check: http://{display_ip}:{args.port}/health")
     print(f"\n📋 Agent Endpoints:")
     for agent_name in launcher.agents.keys():
-        print(f"   • {agent_name}: http://{args.host}:{args.port}/{agent_name}/mcp")
+        print(f"   • {agent_name}: http://{display_ip}:{args.port}/{agent_name}/mcp")
     print()
     
     # 启动服务器
