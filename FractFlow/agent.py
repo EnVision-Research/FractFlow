@@ -59,18 +59,35 @@ class Agent:
         
         self.logger.info(f"Agent '{self.name}' initialized")
         
-    def add_tool(self, tool_path: str, tool_name: str) -> None:
+    def add_tool(self, tool_source: str, tool_name: str, transport_mode: Optional[str] = None) -> None:
         """
         Add a tool to the agent.
         
         Args:
-            tool_path: Path to the tool script
-            tool_name: Optional name for the tool. If not provided, the basename of the path will be used.
+            tool_source: Path to the tool script OR HTTP URL to remote MCP server
+            tool_name: Name for the tool
+            transport_mode: Optional transport mode override ("stdio" or "http")
         """
-        if not os.path.exists(tool_path):
-            raise ValueError(f"Tool script not found: {tool_path}")
-        
-        self.tool_configs[tool_name] = tool_path
+        # Check if tool_source is a HTTP URL
+        if tool_source.startswith(('http://', 'https://')):
+            # Store HTTP URL configuration
+            self.tool_configs[tool_name] = {
+                'type': 'http_url',
+                'url': tool_source
+            }
+            self.logger.debug(f"Added remote HTTP tool", {"name": tool_name, "url": tool_source})
+        else:
+            # Handle local file path
+            if not os.path.exists(tool_source):
+                raise ValueError(f"Tool script not found: {tool_source}")
+            
+            if transport_mode == 'http':
+                # For HTTP mode, we'll need to manage the server lifecycle differently
+                # For now, store the path and let the tool handle its own HTTP server
+                pass
+            
+            self.tool_configs[tool_name] = tool_source
+            self.logger.debug(f"Added local tool", {"name": tool_name, "path": tool_source})
     
     def _ensure_initialized(self) -> None:
         """Initialize components if they haven't been initialized yet."""

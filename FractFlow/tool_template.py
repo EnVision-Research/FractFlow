@@ -16,6 +16,7 @@ from typing import List, Tuple, Dict, Any, Optional
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 import os.path as osp
+import socket
 
 # Import the FractFlow Agent and Config
 from .agent import Agent
@@ -82,6 +83,11 @@ class ToolTemplate:
     TOOLS (List[Tuple[str, str]]): List of (tool_path, tool_name) tuples
     MCP_SERVER_NAME (str): Custom MCP server name (defaults to class name)
     
+    ===== OPTIONAL: HTTP Transport Configuration =====
+    TRANSPORT_MODE: Optional[str] = "stdio"  # "stdio" | "http"
+    HTTP_PORT: Optional[int] = None
+    HTTP_HOST: Optional[str] = "127.0.0.1"
+    
     ===== OPTIONAL OVERRIDES =====
     create_config() -> ConfigManager: Custom configuration creation
     
@@ -147,6 +153,12 @@ class ToolTemplate:
     # ===== OPTIONAL: User can define these =====
     TOOLS: List[Tuple[str, str]] = []
     MCP_SERVER_NAME: Optional[str] = None
+    
+    # ===== OPTIONAL: HTTP Transport Configuration =====
+    TRANSPORT_MODE: Optional[str] = "stdio"  # "stdio" | "http"
+    HTTP_PORT: Optional[int] = None
+    HTTP_HOST: Optional[str] = "127.0.0.1"
+    HTTP_PATH: Optional[str] = "/mcp"  # MCP endpoint path
     
     # ===== INTERNAL: Template implementation =====
     # Class-level MCP server instance
@@ -216,6 +228,11 @@ class ToolTemplate:
         project_root = cls._get_project_root()
         
         for tool_path, tool_name in cls.TOOLS:
+            # Handle HTTP URLs directly
+            if tool_path.startswith(('http://', 'https://')):
+                agent.add_tool(tool_path, tool_name)
+                continue
+                
             # Handle relative paths - now relative to project root
             if not os.path.isabs(tool_path):
                 full_path = os.path.join(project_root, tool_path)
@@ -288,6 +305,89 @@ class ToolTemplate:
         """
     
     @classmethod
+    def _get_transport_config(cls) -> Dict[str, Any]:
+        """Get transport configuration from class attributes"""
+        return {
+            'mode': cls.TRANSPORT_MODE,
+            'host': cls.HTTP_HOST,
+            'port': cls.HTTP_PORT or cls._get_available_port(),
+            'path': cls.HTTP_PATH
+        }
+    
+    @classmethod
+    def _get_available_port(cls, preferred_port: Optional[int] = None) -> int:
+        """Get an available port for HTTP server"""
+        if preferred_port:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                try:
+                    s.bind(('', preferred_port))
+                    return preferred_port
+                except OSError:
+                    pass
+        
+        # Find an available port
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))
+            return s.getsockname()[1]
+    
+    @classmethod
+    def _get_local_ip(cls):
+        """Get the local IP address for display purposes"""
+        import socket
+        try:
+            # Connect to a remote address to determine the local IP
+            # This doesn't actually send data, just determines routing
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                s.connect(("8.8.8.8", 80))
+                local_ip = s.getsockname()[0]
+                return local_ip
+        except Exception:
+            # Fallback to localhost if unable to determine IP
+            return "127.0.0.1"
+    
+    @classmethod
+    def _run_http_server(cls):
+        """Run server using HTTP transport"""
+        if cls._mcp is None:
+            cls._mcp = FastMCP(cls._get_mcp_server_name())
+            tool_name = f"{cls.__name__.lower()}"
+            tool_description = cls._get_tool_description()
+            cls._mcp.tool(name=tool_name, description=tool_description)(cls._mcp_tool_function)
+        
+        config = cls._get_transport_config()
+        
+        # Configure host, port and path in FastMCP settings
+        cls._mcp.settings.host = config['host']
+        cls._mcp.settings.port = config['port']
+        cls._mcp.settings.streamable_http_path = config['path']
+        
+        # Display user-friendly access URLs
+        if config['host'] == '0.0.0.0':
+            # Show both localhost and actual IP when binding to all interfaces
+            local_ip = cls._get_local_ip()
+            print(f"Starting {cls.__name__} HTTP server:")
+            print(f"  📱 Local access:  http://127.0.0.1:{config['port']}{config['path']}")
+            print(f"  🌐 Network access: http://{local_ip}:{config['port']}{config['path']}")
+        else:
+            # Show the specific host when binding to specific interface
+            full_url = f"http://{config['host']}:{config['port']}{config['path']}"
+            print(f"Starting {cls.__name__} HTTP server at {full_url}")
+        
+        # Use streamable-http transport (correct parameter for MCP 1.x)
+        cls._mcp.run(transport='streamable-http')
+    
+    @classmethod
+    def _run_stdio_server(cls):
+        """Run server using STDIO transport (original behavior)"""
+        if cls._mcp is None:
+            cls._mcp = FastMCP(cls._get_mcp_server_name())
+            tool_name = f"{cls.__name__.lower()}"
+            tool_description = cls._get_tool_description()
+            cls._mcp.tool(name=tool_name, description=tool_description)(cls._mcp_tool_function)
+        
+        cls._mcp.run(transport='stdio')
+    
+    @classmethod
     def _validate_configuration(cls):
         """Validate that required class attributes are defined"""
         if cls.SYSTEM_PROMPT is None:
@@ -310,6 +410,10 @@ class ToolTemplate:
         # Validate tool paths exist
         project_root = cls._get_project_root()
         for tool_path, tool_name in cls.TOOLS:
+            # Skip validation for HTTP URLs
+            if tool_path.startswith(('http://', 'https://')):
+                continue
+                
             # Handle relative paths - now relative to project root
             if not os.path.isabs(tool_path):
                 full_path = os.path.join(project_root, tool_path)
@@ -320,7 +424,7 @@ class ToolTemplate:
                 raise ValueError(
                     f"Tool path does not exist: {full_path}\n"
                     f"Check the TOOLS configuration in {cls.__name__}.\n"
-                    f"Tool paths should be relative to the project root or absolute paths.\n"
+                    f"Tool paths should be relative to the project root, absolute paths, or HTTP URLs.\n"
                     f"Project root detected: {project_root}"
                 )
     
@@ -389,20 +493,13 @@ class ToolTemplate:
     
     @classmethod
     def _run_mcp_server(cls):
-        """Run in MCP Server mode"""
-        # Initialize MCP server if not already done
-        if cls._mcp is None:
-            cls._mcp = FastMCP(cls._get_mcp_server_name())
-            
-            # Generate a proper tool name based on the class name
-            tool_name = f"{cls.__name__.lower()}"
-            
-            # Register the main tool function with description and custom name
-            tool_description = cls._get_tool_description()
-            cls._mcp.tool(name=tool_name, description=tool_description)(cls._mcp_tool_function)
+        """Run in MCP Server mode with configurable transport"""
+        transport_config = cls._get_transport_config()
         
-        # Run the MCP server
-        cls._mcp.run(transport='stdio')
+        if transport_config['mode'] == 'http':
+            cls._run_http_server()
+        else:
+            cls._run_stdio_server()
     
     @classmethod
     def main(cls):
@@ -415,7 +512,20 @@ class ToolTemplate:
         parser.add_argument('--interactive', '-i', action='store_true', help='Run in interactive mode')
         parser.add_argument('--query', '-q', type=str, help='Single query mode: process this query and exit')
         parser.add_argument('--log-level', '-l', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='INFO', help='Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL')
+        parser.add_argument('--http-port', type=int, help='Run HTTP server on specified port (enables HTTP mode)')
+        parser.add_argument('--http-host', type=str, default='0.0.0.0', help='HTTP server host (default: 0.0.0.0)')
+        parser.add_argument('--http-path', type=str, help='HTTP server MCP endpoint path (default: /mcp or /[class_name])')
         args = parser.parse_args()
+        
+        # Override class attributes with command line arguments
+        if args.http_port:
+            cls.TRANSPORT_MODE = 'http'
+            cls.HTTP_PORT = args.http_port
+            cls.HTTP_HOST = args.http_host
+            if args.http_path:
+                cls.HTTP_PATH = args.http_path
+            elif cls.HTTP_PATH == "/mcp":  # Only override default
+                cls.HTTP_PATH = f"/{cls.__name__.lower()}"
         
         # Setup logging
         setup_logging(level=args.log_level)

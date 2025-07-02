@@ -89,21 +89,30 @@ class Orchestrator:
         self.launcher.register_server(name, provider_info)
         self.logger.debug(f"Registered tool provider", {"name": name})
         
-    def register_tools_from_config(self, tools_config: Dict[str, str]) -> None:
+    def register_tools_from_config(self, tools_config: Dict[str, Any]) -> None:
         """
         Register multiple tool providers from a configuration dictionary.
         
         Args:
-            tools_config: Dictionary mapping tool names to their provider scripts
+            tools_config: Dictionary mapping tool names to their provider scripts or HTTP URL configs
                           Example: {'weather': '/path/to/weather_agent.py',
-                                   'search': '/path/to/search_tool.py'}
+                                   'search': {'type': 'http_url', 'url': 'http://...'},
+                                   'file': '/path/to/file_tool.py'}
         """
-        for tool_name, script_path in tools_config.items():
-            if os.path.exists(script_path):
-                self.register_tool_provider(tool_name, script_path)
-                self.logger.debug(f"Registered tool provider", {"name": tool_name, "path": script_path})
+        for tool_name, config_info in tools_config.items():
+            # Handle HTTP URL dictionary format
+            if isinstance(config_info, dict) and config_info.get('type') == 'http_url':
+                self.register_tool_provider(tool_name, config_info)
+                self.logger.debug(f"Registered HTTP tool provider", {"name": tool_name, "url": config_info.get('url')})
+            # Handle string path format
+            elif isinstance(config_info, str):
+                if os.path.exists(config_info):
+                    self.register_tool_provider(tool_name, config_info)
+                    self.logger.debug(f"Registered tool provider", {"name": tool_name, "path": config_info})
+                else:
+                    self.logger.warning(f"Tool script not found", {"name": tool_name, "path": config_info})
             else:
-                self.logger.warning(f"Tool script not found", {"name": tool_name, "path": script_path})
+                self.logger.warning(f"Invalid tool configuration format", {"name": tool_name, "config": config_info})
                 
     def register_tools_from_file(self, config_file_path: str) -> None:
         """

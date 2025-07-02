@@ -7,7 +7,7 @@ and coordinating tool calls.
 
 import asyncio
 import logging
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple, Union
 from contextlib import AsyncExitStack
 
 # 导入外部MCP库
@@ -34,42 +34,90 @@ class MCPClientPool:
         self.exit_stack = AsyncExitStack()
         self.tool_to_client: Dict[str, str] = {}  # Maps tool_name to client_name
         
-    async def add_client(self, client_name: str, server_script_path: str) -> None:
+    async def add_client(self, client_name: str, server_info: Any) -> None:
         """
-        Initialize a new MCP client and add it to the pool.
+        Add a client with support for both stdio and HTTP transports
         
         Args:
             client_name: Name to identify this client
-            server_script_path: Path to the server script
+            server_info: Either script path (stdio) or dict with transport config
             
         Raises:
             Exception: If the client cannot be added
         """
-        try:
-            # Connect to the MCP server using stdio
-            server_params = StdioServerParameters(
-                command="python",
-                args=[server_script_path],
-                env=None
-            )
+        if isinstance(server_info, dict):
+            await self._add_http_client(client_name, server_info)
+        else:
+            await self._add_stdio_client(client_name, server_info)
             
-            stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
-            stdio, write = stdio_transport
-            session = await self.exit_stack.enter_async_context(ClientSession(stdio, write))
+    async def _add_stdio_client(self, client_name: str, server_script_path: str) -> None:
+        """Initialize a stdio MCP client and add it to the pool"""
+        # Connect to the MCP server using stdio
+        server_params = StdioServerParameters(
+            command="python",
+            args=[server_script_path],
+            env=None
+        )
+        
+        stdio_transport = await self.exit_stack.enter_async_context(stdio_client(server_params))
+        stdio, write = stdio_transport
+        session = await self.exit_stack.enter_async_context(ClientSession(stdio, write))
+        
+        await session.initialize()
+        self.clients[client_name] = session
+        
+        # Map tools to this client
+        response = await session.list_tools()
+        for tool in response.tools:
+            self.tool_to_client[tool.name] = client_name
             
-            await session.initialize()
-            self.clients[client_name] = session
+        logger.info(f"Added stdio client '{client_name}' with {len(response.tools)} tools")
+        
+    async def _add_http_client(self, client_name: str, config: Dict[str, Any]) -> None:
+        """Add HTTP client connection"""
+        url = f"http://{config['host']}:{config['port']}/mcp"
+        
+        # Import HTTP transport here to avoid potential import issues
+        from mcp.client.streamable_http import streamablehttp_client
+        
+        http_transport = await self.exit_stack.enter_async_context(streamablehttp_client(url))
+        read, write, _ = http_transport  # Ignore the third element (session_id function)
+        session = await self.exit_stack.enter_async_context(ClientSession(read, write))
+        
+        await session.initialize()
+        self.clients[client_name] = session
+        
+        # Map tools to this client
+        response = await session.list_tools()
+        for tool in response.tools:
+            self.tool_to_client[tool.name] = client_name
             
-            # Map tools to this client
-            response = await session.list_tools()
-            for tool in response.tools:
-                self.tool_to_client[tool.name] = client_name
-                
-            logger.info(f"Added client '{client_name}' with {len(response.tools)} tools")
+        logger.info(f"Added HTTP client '{client_name}' at {url} with {len(response.tools)} tools")
+    
+    async def add_http_url_client(self, client_name: str, url: str) -> None:
+        """Add HTTP client connection to remote URL"""
+        # Import HTTP transport here to avoid potential import issues
+        from mcp.client.streamable_http import streamablehttp_client
+        
+        # Ensure URL ends with proper MCP path if not specified
+        if not url.endswith('/mcp') and not url.endswith('/mcp/'):
+            if not url.endswith('/'):
+                url += '/'
+            # Don't automatically append /mcp as the URL might have custom path
+        
+        http_transport = await self.exit_stack.enter_async_context(streamablehttp_client(url))
+        read, write, _ = http_transport  # Ignore the third element (session_id function)
+        session = await self.exit_stack.enter_async_context(ClientSession(read, write))
+        
+        await session.initialize()
+        self.clients[client_name] = session
+        
+        # Map tools to this client
+        response = await session.list_tools()
+        for tool in response.tools:
+            self.tool_to_client[tool.name] = client_name
             
-        except Exception as e:
-            logger.error(f"Error adding client '{client_name}': {e}")
-            raise
+        logger.info(f"Added remote HTTP client '{client_name}' at {url} with {len(response.tools)} tools")
             
     async def call(self, tool_name: str, arguments: Dict[str, Any]) -> str:
         """

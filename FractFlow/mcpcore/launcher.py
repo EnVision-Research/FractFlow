@@ -5,7 +5,7 @@ Provides functionality to manage and launch multiple MCP tool servers.
 """
 
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 from .client_pool import get_client_pool
 from ..infra.config import ConfigManager
@@ -35,46 +35,71 @@ class MCPLauncher:
         
         self.client_pool = get_client_pool()
         self.server_paths: Dict[str, str] = {}
+        self.http_servers: Dict[str, Dict[str, Any]] = {}
+        self.http_urls: Dict[str, str] = {}  # Remote HTTP URLs
         
         self.logger.debug("Launcher initialized")
         
-    def register_server(self, server_name: str, script_path: str) -> None:
+    def register_server(self, server_name: str, server_info) -> None:
         """
-        Register an MCP server to be launched.
+        Register an MCP server to be launched with support for stdio, HTTP, and remote URL modes.
         
         Args:
             server_name: A unique name for this server
-            script_path: Path to the server script
+            server_info: Script path (stdio), dict with transport config (HTTP), or dict with HTTP URL
             
         Raises:
             FileNotFoundError: If the server script doesn't exist
         """
-        if not os.path.exists(script_path):
-            error_msg = f"Server script not found: {script_path}"
-            self.logger.error(error_msg, {"server": server_name, "path": script_path})
-            raise FileNotFoundError(error_msg)
-            
-        self.server_paths[server_name] = script_path
-        self.logger.debug(f"Registered server", {"name": server_name, "path": script_path})
+        if isinstance(server_info, dict):
+            if 'type' in server_info and server_info['type'] == 'http_url':
+                # Remote HTTP URL
+                self.http_urls[server_name] = server_info['url']
+                self.logger.debug(f"Registered remote HTTP URL", {"name": server_name, "url": server_info['url']})
+            else:
+                # Local HTTP server config
+                self.http_servers[server_name] = server_info
+                self.logger.debug(f"Registered HTTP server", {"name": server_name, "config": server_info})
+        else:
+            # Local script path
+            if not os.path.exists(server_info):
+                error_msg = f"Server script not found: {server_info}"
+                self.logger.error(error_msg, {"server": server_name, "path": server_info})
+                raise FileNotFoundError(error_msg)
+            self.server_paths[server_name] = server_info
+            self.logger.debug(f"Registered stdio server", {"name": server_name, "path": server_info})
         
     async def launch_all(self) -> None:
         """
-        Launch all registered MCP servers and connect clients.
+        Launch all registered MCP servers (stdio, HTTP, and remote URLs) and connect clients.
         
         Raises:
             Exception: If any server fails to launch
         """
-        self.logger.debug(f"Launching servers", {"count": len(self.server_paths)})
+        total_servers = len(self.server_paths) + len(self.http_servers) + len(self.http_urls)
+        self.logger.debug(f"Launching servers", {
+            "stdio_count": len(self.server_paths), 
+            "http_count": len(self.http_servers),
+            "url_count": len(self.http_urls),
+            "total": total_servers
+        })
         
-        try:
-            for server_name, script_path in self.server_paths.items():
-                self.logger.debug(f"Launching server", {"name": server_name})
-                await self.client_pool.add_client(server_name, script_path)
-                
-            self.logger.info("All servers launched successfully")
-        except Exception as e:
-            self.logger.error(f"Error launching servers", {"error": str(e)})
-            raise
+        # Launch stdio servers
+        for server_name, script_path in self.server_paths.items():
+            self.logger.debug(f"Launching stdio server", {"name": server_name})
+            await self.client_pool.add_client(server_name, script_path)
+        
+        # Launch HTTP servers
+        for server_name, config in self.http_servers.items():
+            self.logger.debug(f"Launching HTTP server", {"name": server_name})
+            await self.client_pool.add_client(server_name, config)
+        
+        # Connect to remote HTTP URLs
+        for server_name, url in self.http_urls.items():
+            self.logger.debug(f"Connecting to remote HTTP URL", {"name": server_name, "url": url})
+            await self.client_pool.add_http_url_client(server_name, url)
+            
+        self.logger.info("All servers launched successfully")
         
     async def shutdown(self) -> None:
         """
