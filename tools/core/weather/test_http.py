@@ -56,7 +56,8 @@ class WeatherAgent(ToolTemplate):
 """
     
     TOOLS = [
-        ("http://10.13.160.129:8009/weatheragent/mcp", "forecast")
+        ("http://10.13.160.129:8009/weatheragent/mcp", "forecast"),
+        ("http://0.0.0.0:8009/fileioagent/mcp", "fileio")
     ]
     
     MCP_SERVER_NAME = "weather_agent"
@@ -84,7 +85,7 @@ class WeatherAgent(ToolTemplate):
             deepseek_model='deepseek-chat',
             max_iterations=5,  # Weather queries usually resolve quickly
             custom_system_prompt=cls.SYSTEM_PROMPT,
-            tool_calling_version='turbo'
+            tool_calling_version='stable'
         )
 
 if __name__ == "__main__":

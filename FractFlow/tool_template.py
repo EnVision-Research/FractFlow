@@ -165,6 +165,24 @@ class ToolTemplate:
     _mcp = None
     
     @classmethod
+    def _create_fastmcp_server(cls) -> FastMCP:
+        """
+        Create FastMCP server instance without running it.
+        
+        This method is used by AgentLauncher to create server instances
+        that can be mounted to a shared FastAPI application.
+        
+        Returns:
+            FastMCP: Configured FastMCP server instance ready for mounting
+        """
+        if cls._mcp is None:
+            cls._mcp = FastMCP(cls._get_mcp_server_name())
+            tool_name = f"{cls.__name__.lower()}"
+            tool_description = cls._get_tool_description()
+            cls._mcp.tool(name=tool_name, description=tool_description)(cls._mcp_tool_function)
+        return cls._mcp
+    
+    @classmethod
     def create_config(cls) -> ConfigManager:
         """
         Create configuration for the agent.
