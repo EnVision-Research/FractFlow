@@ -1,5 +1,11 @@
 # FractFlow
 
+<div align="right">
+
+**🇨🇳 中文** | [**🇺🇸 English**](./README.md)
+
+</div>
+
 FractFlow 是一个分形智能架构，将智能分解为可嵌套的 Agent-Tool 单元，通过递归组合构建动态演进的分布式认知系统。
 
 ## 设计理念
@@ -116,6 +122,30 @@ python tools/core/weather/weather_agent.py --query "How is the weather in New Yo
 
 ## 快速开始
 
+### 一键启动所有服务（推荐）
+
+使用统一启动脚本，一键启动Web UI、后端API和Agent服务：
+
+```bash
+# 一键启动所有服务
+python scripts/start_all.py
+```
+
+启动成功后，您将看到：
+```
+🎉 所有服务启动成功!
+📋 服务地址:
+   🎨 前端界面: http://192.168.1.100:50003
+   🔧 后端API: http://192.168.1.100:50008  
+   🤖 Agent服务: http://192.168.1.100:50018
+   📖 完整API文档: http://192.168.1.100:50018/docs
+```
+
+**服务说明**：
+- **前端界面**：现代化Web UI，提供可视化Agent管理和实时交互
+- **后端API**：Agent扫描和WebSocket服务
+- **Agent服务**：统一Agent HTTP服务，支持REST API和MCP协议
+
 ### 基础使用
 
 FractFlow 中的每个工具都支持三种运行模式：
@@ -138,6 +168,60 @@ python tools/core/file_io/file_io_agent.py --query "读取 README.md 文件"
 ```bash
 python tools/core/file_io/file_io_agent.py --query "读取项目根目录的 README.md 文件前10行"
 ```
+
+## Web UI 界面
+
+FractFlow 提供了现代化的Web界面，让您能够通过浏览器可视化地管理和交互Agent，无需记住复杂的命令行参数。
+
+### 主要特性
+
+- **🎨 可视化Agent管理**：以卡片形式展示所有可用的Agent
+- **🖥️ 实时交互终端**：内置终端组件，支持完整的PTY功能
+- **🌐 跨设备访问**：支持局域网访问，可在手机、平板等设备使用
+- **⚡ 实时通信**：基于WebSocket的实时数据传输
+- **📱 响应式设计**：适配不同屏幕尺寸的设备
+
+### 启动Web UI
+
+**方法1：使用统一启动脚本（推荐）**
+```bash
+python scripts/start_all.py
+```
+
+**方法2：分别启动各服务**
+```bash
+# 启动后端服务
+cd web_ui/backend
+python run.py
+
+# 启动前端服务（新终端）
+cd web_ui/frontend
+npm run dev
+
+# 启动Agent服务（新终端）
+python tools/agent_launcher.py --port 50018
+```
+
+### 使用Web UI
+
+1. **访问界面**：打开浏览器访问 `http://localhost:50003`
+2. **浏览Agent**：界面会自动扫描并显示所有可用的Agent
+3. **选择Agent**：点击感兴趣的Agent卡片
+4. **实时交互**：在弹出的终端中与Agent进行对话
+
+
+### 网络访问
+
+Web UI支持跨设备访问，方便在不同设备上使用：
+
+```bash
+# 本机访问
+http://localhost:50003
+
+# 局域网访问（其他设备）
+http://192.168.1.100:50003  # 替换为您的实际IP
+```
+
 
 ## 工具开发教程
 
@@ -254,6 +338,140 @@ TOOLS = [("tools/core/gpt_imagen/gpt_imagen_mcp.py", "gpt_image_generator_operat
 - **专业分工**：每个工具专注特定领域，通过组合实现复杂功能
 - **自适应协调**：高层工具根据任务需求动态选择和组合底层工具
 
+### HTTP传输模式开发
+
+FractFlow 支持HTTP传输模式，让工具能够通过网络提供服务，实现远程调用和跨设备访问。
+
+#### 一键启动HTTP服务
+
+**核心理念**：只需一个参数，即可启动HTTP服务
+
+```python
+from FractFlow.tool_template import ToolTemplate
+
+class MyHttpTool(ToolTemplate):
+    """HTTP传输模式工具示例"""
+    
+    SYSTEM_PROMPT = """你是一个有用的助手..."""
+    TOOL_DESCRIPTION = """通过HTTP提供服务的工具..."""
+    
+    # 无需额外配置！
+
+if __name__ == "__main__":
+    MyHttpTool.main()
+```
+
+**启动方式**：
+```bash
+# 启动HTTP服务（自动配置所有参数）
+python my_http_tool.py --http-port 8080
+
+# 系统自动配置：
+# - 监听地址：0.0.0.0:8080（支持外部访问）
+# - 访问路径：/myhttptool
+# - 显示友好的访问URL
+```
+
+#### 远程工具调用配置
+
+**方法1：在TOOLS中配置远程工具**
+
+```python
+class WeatherAgent(ToolTemplate):
+    """支持远程工具调用的Agent"""
+    
+    SYSTEM_PROMPT = """..."""
+    TOOL_DESCRIPTION = """..."""
+    
+    # 混合配置：本地工具 + 远程工具
+    TOOLS = [
+        # 本地工具
+        ("tools/core/file_io/file_io_mcp.py", "local_fileio"),
+        
+        # 远程工具（只需URL即可）
+        ("http://192.168.1.100:50018/weatheragent/mcp", "weather"),
+        ("http://192.168.1.200:50018/fileioagent/mcp", "fileio"),
+    ]
+```
+
+**方法2：使用REST API直接调用**
+
+```python
+import requests
+
+# 直接调用远程Agent
+result = requests.post(
+    'http://192.168.1.100:50018/api/agents/weatheragent',
+    json={'query': 'Weather in New York'}
+).json()
+
+print(result)
+```
+
+#### 统一Agent Launcher
+
+使用Agent Launcher将多个Agent聚合到同一HTTP端口：
+
+```bash
+# 启动所有Agent（自动扫描）
+python tools/agent_launcher.py --port 50018
+
+# 只启动指定Agent
+python tools/agent_launcher.py --port 50018 --agents weather,file_io,visual
+```
+
+Agent Launcher提供统一的REST API接口：
+
+```bash
+# 查看所有Agent
+curl http://localhost:50018/
+
+# 调用特定Agent
+curl -X POST http://localhost:50018/api/agents/weatheragent \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Weather in New York"}'
+```
+
+#### 网络访问配置
+
+**本地开发**：
+```bash
+# 本地访问
+python my_tool.py --http-port 8080
+# 访问地址：http://localhost:8080/mytool
+```
+
+**局域网访问**：
+```bash
+# 自动支持局域网访问（无需额外配置）
+python my_tool.py --http-port 8080
+# 访问地址：http://192.168.1.100:8080/mytool
+```
+
+**跨网段访问**：
+```python
+# 在其他工具中调用远程服务
+TOOLS = [
+    ("http://10.0.0.50:8080/weather/mcp", "weather"),
+    ("http://172.16.0.100:8080/fileio/mcp", "fileio"),
+]
+```
+
+#### 模式选择指南
+
+| 使用场景 | 启动方式 | 适用情况 |
+|----------|----------|----------|
+| **本地开发** | `python tool.py --interactive` | 调试、测试 |
+| **单次查询** | `python tool.py --query "..."` | 脚本集成、自动化 |
+| **网络服务** | `python tool.py --http-port 8080` | 远程访问、Web集成 |
+
+#### 最佳实践
+
+- **开发时**：使用交互模式(`--interactive`)进行调试
+- **演示时**：使用HTTP模式(`--http-port`)支持多设备访问
+- **部署时**：使用Agent Launcher统一管理多个服务
+- **集成时**：优先使用TOOLS配置，其次考虑REST API
+
 ### 深度掌握：架构原理
 
 #### ToolTemplate 生命周期
@@ -364,6 +582,44 @@ python tools/core/websearch/websearch_agent.py --query "Latest AI technology dev
 python tools/core/websearch/websearch_agent.py --query "Python performance optimization methods"
 ```
 
+#### 远程HTTP调用示例
+
+**方法1：使用REST API**
+
+```bash
+# 调用远程Agent
+curl -X POST http://192.168.1.100:50018/api/agents/weatheragent \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Weather in New York"}'
+```
+
+**方法2：使用Python**
+
+```python
+import requests
+
+result = requests.post(
+    'http://192.168.1.100:50018/api/agents/weatheragent',
+    json={'query': 'Weather in San Francisco'}
+).json()
+print(result)
+```
+
+**方法3：在TOOLS中配置**
+
+```python
+class RemoteWeatherAgent(ToolTemplate):
+    """使用远程工具的Agent"""
+    
+    SYSTEM_PROMPT = """你是一个天气助手..."""
+    TOOL_DESCRIPTION = """远程天气查询工具..."""
+    
+    TOOLS = [
+        ("http://192.168.1.100:50018/weatheragent/mcp", "weather"),
+        ("http://192.168.1.200:50018/fileioagent/mcp", "fileio"),
+    ]
+```
+
 
 #### Weather Agent - 天气查询助手（仅限美国地区）
 ```bash
@@ -392,7 +648,7 @@ python tools/core/visual_question_answer/vqa_agent.py --query "Image: /path/to/p
 python tools/composite/visual_article_agent.py --query "写一篇关于人工智能发展的文章，包含配图"
 
 # 定制文章
-python tools/composite/visual_article_agent.py --query "设定：一个视觉识别AI统治社会的世界，人类只能依赖它解释图像。主人公却拥有“人类视觉直觉”，并因此被怀疑为异常个体。
+python tools/composite/visual_article_agent.py --query "设定：一个视觉识别AI统治社会的世界，人类只能依赖它解释图像。主人公却拥有"人类视觉直觉"，并因此被怀疑为异常个体。
 要求：以第一人称，写一段剧情片段，展现他与AI模型对图像理解的冲突。
 情绪基调：冷峻、怀疑、诗性。"
 ```
@@ -427,6 +683,160 @@ python tools/composite/web_save_agent.py --query "Find information about machine
 - 智能内容组织和结构化
 - 自动文件路径管理
 - 多轮搜索支持
+
+## 统一启动和管理
+
+FractFlow 提供了统一的启动和管理机制，让您能够轻松地管理多个服务和实现跨设备访问。
+
+### 统一启动脚本
+
+使用 `scripts/start_all.py` 一键启动所有服务：
+
+```bash
+# 启动所有服务
+python scripts/start_all.py
+```
+
+该脚本会自动启动：
+- **前端服务**：Web UI界面（端口50003）
+- **后端服务**：API服务和WebSocket代理（端口50008）
+- **Agent服务**：统一Agent HTTP服务（端口50018）
+
+### 服务架构总览
+
+```
+┌─────────────────────┐
+│      用户设备        │
+│   (浏览器/API客户端)   │
+└─────────┬───────────┘
+          │
+          v
+┌─────────────────────┐    ┌─────────────────────┐
+│    前端服务          │    │    后端服务          │
+│  (React+Vite)       │◄──►│   (FastAPI)         │
+│   Port: 50003       │    │   Port: 50008       │
+└─────────────────────┘    └─────────┬───────────┘
+                                      │
+                                      v
+                           ┌─────────────────────┐
+                           │   Agent Launcher    │
+                           │     (FastAPI)       │
+                           │   Port: 50018       │
+                           └─────────┬───────────┘
+                                     │
+                ┌────────────────────┼────────────────────┐
+                │                    │                    │
+                v                    v                    v
+        ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
+        │  Weather    │      │  File I/O   │      │  Visual     │
+        │   Agent     │      │   Agent     │      │   Agent     │
+        └─────────────┘      └─────────────┘      └─────────────┘
+```
+
+### 网络配置
+
+**本机访问**：
+- 前端界面：`http://localhost:50003`
+- 后端API：`http://localhost:50008`
+- Agent服务：`http://localhost:50018`
+
+**局域网访问**：
+脚本会自动检测本机IP地址，支持局域网内其他设备访问：
+- 前端界面：`http://192.168.1.100:50003`
+- 后端API：`http://192.168.1.100:50008`
+- Agent服务：`http://192.168.1.100:50018`
+
+### 服务管理
+
+**启动特定服务**：
+```bash
+# 只启动前端
+cd web_ui/frontend && npm run dev
+
+# 只启动后端
+cd web_ui/backend && python run.py
+
+# 只启动Agent服务
+python tools/agent_launcher.py --port 50018
+```
+
+**启动指定Agent**：
+```bash
+# 只启动指定的Agent
+python tools/agent_launcher.py --port 50018 --agents weather,file_io,visual
+```
+
+**监控服务状态**：
+```bash
+# 检查服务健康状态
+curl http://localhost:50018/health
+
+# 查看可用Agent列表
+curl http://localhost:50018/
+
+# 查看API文档
+# 浏览器访问：http://localhost:50018/docs
+```
+
+### 安全考虑
+
+**网络安全**：
+- 默认配置仅允许本地访问
+- 如需外部访问，请谨慎配置防火墙规则
+- 生产环境建议使用HTTPS和身份验证
+
+**端口管理**：
+- 使用标准端口配置，避免与其他服务冲突
+- 可通过命令行参数自定义端口
+- 支持自动端口检测和分配
+
+### 故障排除
+
+**常见问题**：
+
+1. **端口冲突**：
+   ```bash
+   # 检查端口占用
+   lsof -i :50003
+   lsof -i :50008  
+   lsof -i :50018
+   ```
+
+2. **服务无法启动**：
+   - 检查依赖包是否安装完整
+   - 确认Python环境和Node.js环境正常
+   - 查看服务日志输出
+
+3. **网络访问问题**：
+   - 检查防火墙设置
+   - 确认IP地址配置正确
+   - 验证网络连通性
+
+**调试模式**：
+```bash
+# 启用详细日志
+python scripts/start_all.py --verbose
+
+# 单独启动服务进行调试
+python web_ui/backend/run.py --debug
+```
+
+### 部署建议
+
+**开发环境**：
+- 使用统一启动脚本
+- 启用调试模式
+- 本地访问即可
+
+**演示环境**：
+- 配置局域网访问
+- 使用Web UI进行演示
+- 准备好网络配置
+
+**生产环境**：
+- 配置反向代理（如Nginx）
+- 启用HTTPS
+- 实施访问控制和监控
 
 ## API 参考
 
@@ -586,6 +996,88 @@ config = ConfigManager(
     tool_calling_version='stable', # 工具调用版本：stable/turbo
     timeout=120                    # 超时设置
 )
+```
+
+### HTTP传输配置
+
+#### 工具HTTP配置
+
+```python
+class MyHttpTool(ToolTemplate):
+    """HTTP模式工具 - 极简配置"""
+    
+    # 只需要定义核心内容
+    SYSTEM_PROMPT = "..."
+    TOOL_DESCRIPTION = "..."
+    
+    # HTTP启动：python tool.py --http-port 8080
+    # 自动配置：
+    # - 监听地址：0.0.0.0:8080
+    # - 访问路径：/myhttptool
+```
+
+#### 远程工具配置
+
+```python
+class RemoteToolAgent(ToolTemplate):
+    """混合本地和远程工具的Agent"""
+    
+    SYSTEM_PROMPT = "..."
+    TOOL_DESCRIPTION = "..."
+    
+    # 混合工具配置
+    TOOLS = [
+        # 本地工具
+        ("tools/core/file_io/file_io_mcp.py", "local_fileio"),
+        
+        # 远程工具（只需URL，无需额外配置）
+        ("http://192.168.1.100:50018/weatheragent/mcp", "weather"),
+        ("http://192.168.1.200:50018/fileioagent/mcp", "fileio"),
+    ]
+```
+
+#### Agent配置远程工具
+
+```python
+from FractFlow.agent import Agent
+from FractFlow.infra.config import ConfigManager
+
+async def setup_remote_agent():
+    # 创建配置
+    config = ConfigManager()
+    agent = Agent(config=config, name='remote_agent')
+    
+    # 添加远程工具（支持HTTP URL）
+    agent.add_tool("http://192.168.1.100:50018/weatheragent/mcp", "weather")
+    agent.add_tool("http://192.168.1.200:50018/fileioagent/mcp", "fileio")
+    
+    # 初始化并使用
+    await agent.initialize()
+    result = await agent.process_query("查询纽约天气并保存到文件")
+    return result
+```
+
+#### 网络访问示例
+
+**本地访问**：
+```bash
+python my_tool.py --http-port 8080
+# → http://localhost:8080/mytool
+```
+
+**局域网访问**：
+```bash
+python my_tool.py --http-port 8080
+# → http://192.168.1.100:8080/mytool （自动显示本机IP）
+```
+
+**分布式部署**：
+```python
+# 在不同机器上启动不同工具，然后在TOOLS中引用
+TOOLS = [
+    ("http://192.168.1.102:8080/weather/mcp", "weather"),
+    ("http://192.168.1.103:8080/fileio/mcp", "fileio"),
+]
 ```
 
 

@@ -3,12 +3,12 @@ import axios from 'axios';
 // API Configuration - Dynamic host detection
 const getApiBaseUrl = () => {
   const hostname = window.location.hostname;
-  return `http://${hostname}:8000`;
+  return `http://${hostname}:50008`;
 };
 
 const getWsBaseUrl = () => {
   const hostname = window.location.hostname;
-  return `ws://${hostname}:8000`;
+  return `ws://${hostname}:50008`;
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -50,7 +50,7 @@ api.interceptors.response.use(
     } else if (error.response?.status >= 500) {
       throw new Error('Server error. Please try again later.');
     } else if (error.code === 'ECONNREFUSED') {
-      throw new Error('Cannot connect to server. Make sure the backend is running on port 8000.');
+      throw new Error('Cannot connect to server. Make sure the backend is running on port 50008.');
     }
     
     throw error;

@@ -1,5 +1,11 @@
 # FractFlow
 
+<div align="right">
+
+[**🇨🇳 中文**](./README_CN.md) | **🇺🇸 English**
+
+</div>
+
 FractFlow is a fractal intelligence architecture that decomposes intelligence into nestable Agent-Tool units, building dynamically evolving distributed cognitive systems through recursive composition.
 
 ## Design Philosophy
@@ -116,6 +122,30 @@ python tools/core/weather/weather_agent.py --query "How is the weather in New Yo
 
 ## Quick Start
 
+### One-Click Startup for All Services (Recommended)
+
+Use the unified startup script to launch Web UI, backend API, and Agent services with one command:
+
+```bash
+# Start all services with one command
+python scripts/start_all.py
+```
+
+After successful startup, you will see:
+```
+🎉 All services started successfully!
+📋 Service addresses:
+   🎨 Frontend: http://192.168.1.100:50003
+   🔧 Backend API: http://192.168.1.100:50008  
+   🤖 Agent Service: http://192.168.1.100:50018
+   📖 Complete API docs: http://192.168.1.100:50018/docs
+```
+
+**Service Overview**:
+- **Frontend**: Modern Web UI providing visual Agent management and real-time interaction
+- **Backend API**: Agent scanning and WebSocket services
+- **Agent Service**: Unified Agent HTTP service supporting REST API and MCP protocol
+
 ### Basic Usage
 
 Each tool in FractFlow supports three running modes:
@@ -131,12 +161,62 @@ python tools/core/file_io/file_io_agent.py --interactive
 python tools/core/file_io/file_io_agent.py --query "Read README.md file"
 ```
 
-### First Tool Run
-
-Let's run a simple file operation:
+Run your first tool:
 
 ```bash
 python tools/core/file_io/file_io_agent.py --query "Read the first 10 lines of README.md file in project root directory"
+```
+
+## Web UI Interface
+
+FractFlow provides a modern web interface that allows you to visually manage and interact with Agents through your browser without memorizing complex command-line parameters.
+
+### Key Features
+
+- **🎨 Visual Agent Management**: Display all available Agents in card format
+- **🖥️ Real-time Interactive Terminal**: Built-in terminal component with full PTY functionality
+- **🌐 Cross-device Access**: Support for LAN access, usable on phones, tablets, and other devices
+- **⚡ Real-time Communication**: Real-time data transmission based on WebSocket
+- **📱 Responsive Design**: Adaptive to different screen sizes
+
+### Starting Web UI
+
+**Method 1: Using Unified Startup Script (Recommended)**
+```bash
+python scripts/start_all.py
+```
+
+**Method 2: Starting Services Separately**
+```bash
+# Start backend service
+cd web_ui/backend
+python run.py
+
+# Start frontend service (new terminal)
+cd web_ui/frontend
+npm run dev
+
+# Start Agent service (new terminal)
+python tools/agent_launcher.py --port 50018
+```
+
+### Using Web UI
+
+1. **Access Interface**: Open browser and visit `http://localhost:50003`
+2. **Browse Agents**: The interface automatically scans and displays all available Agents
+3. **Select Agent**: Click on the Agent card you're interested in
+4. **Real-time Interaction**: Chat with the Agent in the popup terminal
+
+### Network Access
+
+Web UI supports cross-device access for convenient use on different devices:
+
+```bash
+# Local access
+http://localhost:50003
+
+# LAN access (other devices)
+http://192.168.1.100:50003  # Replace with your actual IP
 ```
 
 ## Tool Development Tutorial
@@ -329,6 +409,141 @@ class AdvancedTool(ToolTemplate):
         )
 ```
 
+### HTTP Transport Mode Development
+
+FractFlow supports HTTP transport mode, allowing tools to provide services over the network for remote calling and cross-device access.
+
+#### One-Click HTTP Service Startup
+
+**Core Philosophy**: Just one parameter to start HTTP service
+
+```python
+from FractFlow.tool_template import ToolTemplate
+
+class MyHttpTool(ToolTemplate):
+    """HTTP mode tool - minimal configuration"""
+    
+    # Only need to define core content
+    SYSTEM_PROMPT = "..."
+    TOOL_DESCRIPTION = "..."
+    
+    # HTTP startup: python tool.py --http-port 8080
+    # Auto-configuration:
+    # - Listen address: 0.0.0.0:8080
+    # - Access path: /myhttptool
+```
+
+**Startup Method**:
+```bash
+# Start HTTP service (auto-configure all parameters)
+python my_http_tool.py --http-port 8080
+
+# System auto-configuration:
+# - Listen address: 0.0.0.0:8080 (supports external access)
+# - Access path: /myhttptool
+# - Displays friendly access URLs
+```
+
+#### Remote Tool Calling Configuration
+
+**Method 1: Configure Remote Tools in TOOLS**
+
+```python
+class WeatherAgent(ToolTemplate):
+    """Agent supporting remote tool calling"""
+    
+    SYSTEM_PROMPT = """..."""
+    TOOL_DESCRIPTION = """..."""
+    
+    # Mixed configuration: local tools + remote tools
+    TOOLS = [
+        # Local tools
+        ("tools/core/file_io/file_io_mcp.py", "local_fileio"),
+        
+        # Remote tools (just need URLs)
+        ("http://192.168.1.100:50018/weatheragent/mcp", "weather"),
+        ("http://192.168.1.200:50018/fileioagent/mcp", "fileio"),
+    ]
+```
+
+**Method 2: Direct REST API Calling**
+
+```python
+import requests
+
+# Direct remote Agent calling
+result = requests.post(
+    'http://192.168.1.100:50018/api/agents/weatheragent',
+    json={'query': 'Weather in New York'}
+).json()
+
+print(result)
+```
+
+#### Unified Agent Launcher
+
+Use Agent Launcher to aggregate multiple Agents on the same HTTP port:
+
+```bash
+# Start all Agents (auto-scan)
+python tools/agent_launcher.py --port 50018
+
+# Start only specified Agents
+python tools/agent_launcher.py --port 50018 --agents weather,file_io,visual
+```
+
+Agent Launcher provides unified REST API interface:
+
+```bash
+# View all Agents
+curl http://localhost:50018/
+
+# Call specific Agent
+curl -X POST http://localhost:50018/api/agents/weatheragent \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Weather in New York"}'
+```
+
+#### Network Access Configuration
+
+**Local Development**:
+```bash
+# Local access
+python my_tool.py --http-port 8080
+# Access URL: http://localhost:8080/mytool
+```
+
+**LAN Access**:
+```bash
+# Automatically supports LAN access (no additional configuration needed)
+python my_tool.py --http-port 8080
+# Access URL: http://192.168.1.100:8080/mytool
+```
+
+**Cross-Subnet Access**:
+```python
+# Call remote services in other tools
+TOOLS = [
+    ("http://10.0.0.50:8080/weather/mcp", "weather"),
+    ("http://172.16.0.100:8080/fileio/mcp", "fileio"),
+]
+```
+
+#### Mode Selection Guide
+
+| Use Case | Startup Method | Applicable Situations |
+|----------|----------|----------|
+| **Local Development** | `python tool.py --interactive` | Debugging, testing |
+| **Single Query** | `python tool.py --query "..."` | Script integration, automation |
+| **Network Service** | `python tool.py --http-port 8080` | Remote access, Web integration |
+
+#### Best Practices
+
+- **During Development**: Use interactive mode (`--interactive`) for debugging
+- **During Demo**: Use HTTP mode (`--http-port`) to support multi-device access
+- **During Deployment**: Use Agent Launcher for unified management of multiple services
+- **During Integration**: Prioritize TOOLS configuration, then consider REST API
+
 ## Tool Showcase
 
 ### Core Tools
@@ -372,6 +587,44 @@ python tools/core/weather/weather_agent.py --query "5-day forecast for San Franc
 ```
 
 This tool can only query weather information within the United States.
+
+#### Remote HTTP Calling Examples
+
+**Method 1: Using REST API**
+
+```bash
+# Call remote Agent
+curl -X POST http://192.168.1.100:50018/api/agents/weatheragent \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Weather in New York"}'
+```
+
+**Method 2: Using Python**
+
+```python
+import requests
+
+result = requests.post(
+    'http://192.168.1.100:50018/api/agents/weatheragent',
+    json={'query': 'Weather in San Francisco'}
+).json()
+print(result)
+```
+
+**Method 3: Configure in TOOLS**
+
+```python
+class RemoteWeatherAgent(ToolTemplate):
+    """Agent using remote tools"""
+    
+    SYSTEM_PROMPT = """You are a weather assistant..."""
+    TOOL_DESCRIPTION = """Remote weather query tool..."""
+    
+    TOOLS = [
+        ("http://192.168.1.100:50018/weatheragent/mcp", "weather"),
+        ("http://192.168.1.200:50018/fileioagent/mcp", "fileio"),
+    ]
+```
 
 #### Visual Question Answer - Visual Q&A
 ```bash
@@ -587,6 +840,88 @@ config = ConfigManager(
 )
 ```
 
+### HTTP Transport Configuration
+
+#### Tool HTTP Configuration
+
+```python
+class MyHttpTool(ToolTemplate):
+    """HTTP mode tool - minimal configuration"""
+    
+    # Only need to define core content
+    SYSTEM_PROMPT = "..."
+    TOOL_DESCRIPTION = "..."
+    
+    # HTTP startup: python tool.py --http-port 8080
+    # Auto-configuration:
+    # - Listen address: 0.0.0.0:8080
+    # - Access path: /myhttptool
+```
+
+#### Remote Tool Configuration
+
+```python
+class RemoteToolAgent(ToolTemplate):
+    """Agent with mixed local and remote tools"""
+    
+    SYSTEM_PROMPT = "..."
+    TOOL_DESCRIPTION = "..."
+    
+    # Mixed tool configuration
+    TOOLS = [
+        # Local tools
+        ("tools/core/file_io/file_io_mcp.py", "local_fileio"),
+        
+        # Remote tools (just need URLs, no additional configuration)
+        ("http://192.168.1.100:50018/weatheragent/mcp", "weather"),
+        ("http://192.168.1.200:50018/fileioagent/mcp", "fileio"),
+    ]
+```
+
+#### Agent Configuration for Remote Tools
+
+```python
+from FractFlow.agent import Agent
+from FractFlow.infra.config import ConfigManager
+
+async def setup_remote_agent():
+    # Create configuration
+    config = ConfigManager()
+    agent = Agent(config=config, name='remote_agent')
+    
+    # Add remote tools (supports HTTP URLs)
+    agent.add_tool("http://192.168.1.100:50018/weatheragent/mcp", "weather")
+    agent.add_tool("http://192.168.1.200:50018/fileioagent/mcp", "fileio")
+    
+    # Initialize and use
+    await agent.initialize()
+    result = await agent.process_query("Query New York weather and save to file")
+    return result
+```
+
+#### Network Access Examples
+
+**Local Access**:
+```bash
+python my_tool.py --http-port 8080
+# → http://localhost:8080/mytool
+```
+
+**LAN Access**:
+```bash
+python my_tool.py --http-port 8080
+# → http://192.168.1.100:8080/mytool (automatically shows local IP)
+```
+
+**Distributed Deployment**:
+```python
+# Start different tools on different machines, then reference in TOOLS
+TOOLS = [
+    ("http://192.168.1.102:8080/weather/mcp", "weather"),
+    ("http://192.168.1.103:8080/fileio/mcp", "fileio"),
+]
+```
+
 ## File Organization
 ```
 tools/
@@ -598,6 +933,7 @@ tools/
 └── composite/            # Composite tools
     └── your_composite_tool.py
 ```
+
 #### Naming Conventions
 - File names: `snake_case`
 - Class names: `PascalCase`
@@ -624,6 +960,156 @@ Enhanced the web UI to display complete tool descriptions instead of truncating 
 
 This enhancement allows users to access complete tool documentation while maintaining a clean interface, supporting FractFlow's philosophy of providing comprehensive information for intelligent decision-making.
 
-## Getting Started
+## Unified Startup and Management
 
-[Rest of existing README content...]
+FractFlow provides unified startup and management mechanisms that allow you to easily manage multiple services and achieve cross-device access.
+
+### Unified Startup Script
+
+Use `scripts/start_all.py` to start all services with one command:
+
+```bash
+# Start all services
+python scripts/start_all.py
+```
+
+This script automatically starts:
+- **Frontend Service**: Web UI interface (port 50003)
+- **Backend Service**: API service and WebSocket proxy (port 50008)
+- **Agent Service**: Unified Agent HTTP service (port 50018)
+
+### Service Architecture Overview
+
+```
+┌─────────────────────┐
+│     User Devices    │
+│  (Browser/API Client)│
+└─────────┬───────────┘
+          │
+          v
+┌─────────────────────┐    ┌─────────────────────┐
+│   Frontend Service  │    │   Backend Service   │
+│   (React+Vite)      │◄──►│    (FastAPI)        │
+│    Port: 50003      │    │    Port: 50008      │
+└─────────────────────┘    └─────────┬───────────┘
+                                     │
+                                     v
+                          ┌─────────────────────┐
+                          │   Agent Launcher    │
+                          │     (FastAPI)       │
+                          │    Port: 50018      │
+                          └─────────┬───────────┘
+                                    │
+               ┌────────────────────┼────────────────────┐
+               │                    │                    │
+               v                    v                    v
+       ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
+       │   Weather   │      │   File I/O  │      │   Visual    │
+       │    Agent    │      │    Agent    │      │    Agent    │
+       └─────────────┘      └─────────────┘      └─────────────┘
+```
+
+### Network Configuration
+
+**Local Access**:
+- Frontend interface: `http://localhost:50003`
+- Backend API: `http://localhost:50008`
+- Agent service: `http://localhost:50018`
+
+**LAN Access**:
+The script automatically detects your machine's IP address and supports access from other devices within the LAN:
+- Frontend interface: `http://192.168.1.100:50003`
+- Backend API: `http://192.168.1.100:50008`
+- Agent service: `http://192.168.1.100:50018`
+
+### Service Management
+
+**Starting Specific Services**:
+```bash
+# Start only frontend
+cd web_ui/frontend && npm run dev
+
+# Start only backend
+cd web_ui/backend && python run.py
+
+# Start only Agent service
+python tools/agent_launcher.py --port 50018
+```
+
+**Starting Specific Agents**:
+```bash
+# Start only specified Agents
+python tools/agent_launcher.py --port 50018 --agents weather,file_io,visual
+```
+
+**Monitoring Service Status**:
+```bash
+# Check service health status
+curl http://localhost:50018/health
+
+# View available Agent list
+curl http://localhost:50018/
+
+# View API documentation
+# Browser: http://localhost:50018/docs
+```
+
+### Security Considerations
+
+**Network Security**:
+- Default configuration only allows local access
+- For external access, carefully configure firewall rules
+- Production environments should use HTTPS and authentication
+
+**Port Management**:
+- Use standard port configuration to avoid conflicts with other services
+- Ports can be customized via command-line parameters
+- Support automatic port detection and allocation
+
+### Troubleshooting
+
+**Common Issues**:
+
+1. **Port Conflicts**:
+   ```bash
+   # Check port usage
+   lsof -i :50003
+   lsof -i :50008  
+   lsof -i :50018
+   ```
+
+2. **Service Cannot Start**:
+   - Check if dependencies are installed completely
+   - Confirm Python environment and Node.js environment are normal
+   - Check service log output
+
+3. **Network Access Issues**:
+   - Check firewall settings
+   - Confirm IP address configuration is correct
+   - Verify network connectivity
+
+**Debug Mode**:
+```bash
+# Enable verbose logging
+python scripts/start_all.py --verbose
+
+# Start services separately for debugging
+python web_ui/backend/run.py --debug
+```
+
+### Deployment Recommendations
+
+**Development Environment**:
+- Use unified startup script
+- Enable debug mode
+- Local access sufficient
+
+**Demo Environment**:
+- Configure LAN access
+- Use Web UI for demonstrations
+- Prepare network configuration
+
+**Production Environment**:
+- Configure reverse proxy (like Nginx)
+- Enable HTTPS
+- Implement access control and monitoring

@@ -56,8 +56,8 @@ class WeatherAgent(ToolTemplate):
 """
     
     TOOLS = [
-        ("http://10.13.160.129:8009/weatheragent/mcp", "forecast"),
-        ("http://0.0.0.0:8009/fileioagent/mcp", "fileio")
+        ("http://localhost:50018/weatheragent/mcp", "forecast"),
+        ("http://localhost:50018/fileioagent/mcp", "fileio")
     ]
     
     MCP_SERVER_NAME = "weather_agent"

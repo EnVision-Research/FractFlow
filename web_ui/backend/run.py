@@ -18,7 +18,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "app.main:app", 
         host="0.0.0.0", 
-        port=8000, 
+        port=50008, 
         reload=True,
         # The reload_dirs will ensure that uvicorn restarts when any backend code changes.
         reload_dirs=[os.path.join(run_dir, 'app')]

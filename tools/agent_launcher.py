@@ -16,7 +16,7 @@ import traceback
 import socket
 from pathlib import Path
 from typing import List, Dict, Type
-from fastapi import FastAPI
+from fastapi import FastAPI, Body
 from contextlib import asynccontextmanager
 import uvicorn
 import contextlib
@@ -201,13 +201,18 @@ class AgentLauncher:
             app.mount(mount_path, mcp_server.streamable_http_app())
             print(f"✓ Mounted {agent_name} at {mount_path}/mcp")
         
+        # 为每个agent创建对应的FastAPI路由，以便在主应用的OpenAPI文档中显示
+        for agent_name, agent_class in self.agents.items():
+            self._create_agent_route(app, agent_name, agent_class)
+        
         # 添加根路径端点
         @app.get("/")
         async def root():
             return {
                 "message": "FractFlow Multi-Agent Server",
                 "agents": list(self.agents.keys()),
-                "endpoints": [f"/{name}/mcp" for name in self.agents.keys()]
+                "endpoints": [f"/{name}/mcp" for name in self.agents.keys()],
+                "api_docs": f"Visit /docs for complete API documentation including all {len(self.agents)} agents"
             }
         
         # 添加健康检查端点
@@ -220,6 +225,45 @@ class AgentLauncher:
             }
         
         return app
+    
+    def _create_agent_route(self, app: FastAPI, agent_name: str, agent_class: Type[ToolTemplate]):
+        """为agent创建FastAPI路由以在主应用文档中显示"""
+        
+        # 获取agent的工具描述
+        tool_description = agent_class._get_tool_description()
+        
+        # 创建路由函数
+        async def agent_query(query: str = Body(..., description="Query for the agent")):
+            """Execute query using the agent"""
+            try:
+                # 调用agent的MCP工具函数
+                result = await agent_class._mcp_tool_function(query)
+                return {
+                    "agent": agent_name,
+                    "query": query,
+                    "result": result,
+                    "status": "success"
+                }
+            except Exception as e:
+                return {
+                    "agent": agent_name,
+                    "query": query,
+                    "error": str(e),
+                    "status": "error"
+                }
+        
+        # 设置路由函数的文档字符串
+        agent_query.__doc__ = f"{agent_class.__name__} - {tool_description}"
+        
+        # 添加路由到应用
+        app.add_api_route(
+            f"/api/agents/{agent_name}",
+            agent_query,
+            methods=["POST"],
+            summary=f"{agent_class.__name__} Query",
+            description=tool_description,
+            tags=[f"{agent_class.__name__}"]
+        )
 
 
 def main():

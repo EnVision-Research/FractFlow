@@ -84,9 +84,10 @@ class ToolTemplate:
     MCP_SERVER_NAME (str): Custom MCP server name (defaults to class name)
     
     ===== OPTIONAL: HTTP Transport Configuration =====
-    TRANSPORT_MODE: Optional[str] = "stdio"  # "stdio" | "http"
-    HTTP_PORT: Optional[int] = None
-    HTTP_HOST: Optional[str] = "127.0.0.1"
+    For HTTP mode, simply run with: python your_tool.py --http-port 8080
+    All other HTTP settings are automatically configured:
+    - Host: 0.0.0.0 (allows external access)
+    - Path: /{class_name} (semantic endpoint)
     
     ===== OPTIONAL OVERRIDES =====
     create_config() -> ConfigManager: Custom configuration creation
@@ -157,8 +158,8 @@ class ToolTemplate:
     # ===== OPTIONAL: HTTP Transport Configuration =====
     TRANSPORT_MODE: Optional[str] = "stdio"  # "stdio" | "http"
     HTTP_PORT: Optional[int] = None
-    HTTP_HOST: Optional[str] = "127.0.0.1"
-    HTTP_PATH: Optional[str] = "/mcp"  # MCP endpoint path
+    HTTP_HOST: Optional[str] = "0.0.0.0"  # Allow external access by default
+    HTTP_PATH: Optional[str] = None  # Will be set to /{class_name} automatically
     
     # ===== INTERNAL: Template implementation =====
     # Class-level MCP server instance
@@ -325,11 +326,14 @@ class ToolTemplate:
     @classmethod
     def _get_transport_config(cls) -> Dict[str, Any]:
         """Get transport configuration from class attributes"""
+        # Auto-generate HTTP path based on class name if not set
+        http_path = cls.HTTP_PATH or f"/{cls.__name__.lower()}"
+        
         return {
             'mode': cls.TRANSPORT_MODE,
             'host': cls.HTTP_HOST,
             'port': cls.HTTP_PORT or cls._get_available_port(),
-            'path': cls.HTTP_PATH
+            'path': http_path
         }
     
     @classmethod
@@ -531,19 +535,13 @@ class ToolTemplate:
         parser.add_argument('--query', '-q', type=str, help='Single query mode: process this query and exit')
         parser.add_argument('--log-level', '-l', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'], default='INFO', help='Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL')
         parser.add_argument('--http-port', type=int, help='Run HTTP server on specified port (enables HTTP mode)')
-        parser.add_argument('--http-host', type=str, default='0.0.0.0', help='HTTP server host (default: 0.0.0.0)')
-        parser.add_argument('--http-path', type=str, help='HTTP server MCP endpoint path (default: /mcp or /[class_name])')
         args = parser.parse_args()
         
         # Override class attributes with command line arguments
         if args.http_port:
             cls.TRANSPORT_MODE = 'http'
             cls.HTTP_PORT = args.http_port
-            cls.HTTP_HOST = args.http_host
-            if args.http_path:
-                cls.HTTP_PATH = args.http_path
-            elif cls.HTTP_PATH == "/mcp":  # Only override default
-                cls.HTTP_PATH = f"/{cls.__name__.lower()}"
+            # Other HTTP settings (host, path) use class defaults automatically
         
         # Setup logging
         setup_logging(level=args.log_level)
