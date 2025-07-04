@@ -84,7 +84,7 @@ ComfyUI智能工作流执行系统，能够自动选择和执行最合适的图�
 """
     
     TOOLS = [
-        ("comfyui_mcp.py", "comfyui_workflows")
+        ("tools/core/comfyui/comfyui_mcp.py", "comfyui_workflows")
     ]
     
     MCP_SERVER_NAME = "comfyui_workflow_agent"

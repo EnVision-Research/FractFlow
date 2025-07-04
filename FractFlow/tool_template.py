@@ -245,7 +245,7 @@ class ToolTemplate:
             agent: Agent instance to add tools to
         """
         project_root = cls._get_project_root()
-        
+
         for tool_path, tool_name in cls.TOOLS:
             # Handle HTTP URLs directly
             if tool_path.startswith(('http://', 'https://')):
@@ -431,6 +431,8 @@ class ToolTemplate:
         
         # Validate tool paths exist
         project_root = cls._get_project_root()
+        print("project_root:", project_root)
+        print("Tools: ", cls.TOOLS)
         for tool_path, tool_name in cls.TOOLS:
             # Skip validation for HTTP URLs
             if tool_path.startswith(('http://', 'https://')):

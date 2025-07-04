@@ -62,7 +62,7 @@ class web_save_agent(ToolTemplate):
     
     # 分形智能体：调用其他智能体
     TOOLS = [
-        ("src/server.py", "search_agent"),
+        ("tools/core/websearch/src/server.py", "search_agent"),
         ("tools/core/file_io/file_io_agent.py", "file_io")
     ]
     

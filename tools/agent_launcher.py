@@ -198,7 +198,7 @@ class AgentLauncher:
         # 挂载每个agent的MCP服务器到对应路径
         for agent_name, mcp_server in self.mcp_servers.items():
             mount_path = f"/{agent_name}"
-            app.mount(mount_path, mcp_server.streamable_http_app())
+            app.mount(mount_path, mcp_server.sse_app())
             print(f"✓ Mounted {agent_name} at {mount_path}/mcp")
         
         # 为每个agent创建对应的FastAPI路由，以便在主应用的OpenAPI文档中显示
@@ -314,4 +314,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()

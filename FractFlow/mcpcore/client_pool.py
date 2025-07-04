@@ -97,7 +97,8 @@ class MCPClientPool:
     async def add_http_url_client(self, client_name: str, url: str) -> None:
         """Add HTTP client connection to remote URL"""
         # Import HTTP transport here to avoid potential import issues
-        from mcp.client.streamable_http import streamablehttp_client
+        # from mcp.client.streamable_http import streamablehttp_client
+        from mcp.client.sse import sse_client
         
         # Ensure URL ends with proper MCP path if not specified
         if not url.endswith('/mcp') and not url.endswith('/mcp/'):
@@ -105,7 +106,7 @@ class MCPClientPool:
                 url += '/'
             # Don't automatically append /mcp as the URL might have custom path
         
-        http_transport = await self.exit_stack.enter_async_context(streamablehttp_client(url))
+        http_transport = await self.exit_stack.enter_async_context(sse_client(url))
         read, write, _ = http_transport  # Ignore the third element (session_id function)
         session = await self.exit_stack.enter_async_context(ClientSession(read, write))
         
