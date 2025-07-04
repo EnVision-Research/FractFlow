@@ -198,7 +198,7 @@ class AgentLauncher:
         # 挂载每个agent的MCP服务器到对应路径
         for agent_name, mcp_server in self.mcp_servers.items():
             mount_path = f"/{agent_name}"
-            app.mount(mount_path, mcp_server.sse_app())
+            app.mount(mount_path, mcp_server.streamable_http_app())
             print(f"✓ Mounted {agent_name} at {mount_path}/mcp")
         
         # 为每个agent创建对应的FastAPI路由，以便在主应用的OpenAPI文档中显示
@@ -269,7 +269,7 @@ class AgentLauncher:
 def main():
     """主程序入口"""
     parser = argparse.ArgumentParser(description="FractFlow Multi-Agent HTTP Server")
-    parser.add_argument("--port", type=int, default=8000, help="HTTP server port (default: 8000)")
+    parser.add_argument("--port", type=int, default=8008, help="HTTP server port (default: 8000)")
     parser.add_argument("--host", type=str, default="0.0.0.0", help="Host to bind to (default: 0.0.0.0)")
     parser.add_argument("--agents", type=str, help="Comma-separated list of agent names to load (default: all)")
     parser.add_argument("--reload", action="store_true", help="Enable auto-reload for development")
