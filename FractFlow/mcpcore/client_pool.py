@@ -78,9 +78,10 @@ class MCPClientPool:
         url = f"http://{config['host']}:{config['port']}/mcp"
         
         # Import HTTP transport here to avoid potential import issues
-        from mcp.client.streamable_http import streamablehttp_client
+        # from mcp.client.streamable_http import streamablehttp_client
+        from mcp.client.sse import sse_client
         
-        http_transport = await self.exit_stack.enter_async_context(streamablehttp_client(url))
+        http_transport = await self.exit_stack.enter_async_context(sse_client(url))
         read, write, _ = http_transport  # Ignore the third element (session_id function)
         session = await self.exit_stack.enter_async_context(ClientSession(read, write))
         
